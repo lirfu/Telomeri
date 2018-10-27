@@ -1,0 +1,10 @@
+# Intermediate (object files) directories.
+obj/
+test/obj/
+
+# Main executable and test executable.
+Telomeri
+test/Telomeri
+
+# Vim autocomplete options.
+.ycm_extra_conf.py
