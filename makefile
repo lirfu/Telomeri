@@ -30,7 +30,7 @@ MAIN_SOURCE_FILE = src/Main.cpp
 
 # ------------------------------- COMPILER FLAGS -------------------------------
 # Debugging flags. Remove if not debugging to enable optimisations. 
-DEBUG_FLAGS = -ggdb -Og -DDEBUG
+DEBUG_FLAGS = -ggdb -O0 -DDEBUG
 
 # Compiler flags (common, C++ only and C only).
 CPPFLAGS = -Wall -pedantic-errors -O2 -I$(INCLUDE_DIR) $(DEBUG_FLAGS)
