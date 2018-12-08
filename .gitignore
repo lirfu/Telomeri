@@ -12,3 +12,8 @@ test/Telomeri
 # CLion folders
 .idea/
 cmake-build-debug/
+
+# Resource folder
+res/*
+# Accept resource folder readme
+!res/Readme.md
