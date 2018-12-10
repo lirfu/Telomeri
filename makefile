@@ -33,7 +33,7 @@ MAIN_SOURCE_FILE = src/Main.cpp
 DEBUG_FLAGS = -ggdb -O0 -DDEBUG
 
 # Compiler flags (common, C++ only and C only).
-CPPFLAGS = -Wall -pedantic-errors -O2 -I$(INCLUDE_DIR) $(DEBUG_FLAGS)
+CPPFLAGS = -Wall -pedantic-errors -O2 -MD -I$(INCLUDE_DIR) $(DEBUG_FLAGS)
 CXXFLAGS = -xc++ -std=c++17 
 CFLAGS = -xc -std=c17
 # ------------------------------------------------------------------------------
@@ -135,4 +135,11 @@ clean:
 purge:
 	$(RM) $(OBJ_DIR) $(TEST_DIR)/$(OBJ_DIR) -r
 	$(RM) $(TEST_DIR)/$(EXECUTABLE) $(EXECUTABLE)
+# ------------------------------------------------------------------------------
+
+
+# ---------------------------------- OTHER -------------------------------------
+# Make source file recompile if header file that it includes has changed. This
+# requires -MD flag passed to GCC.
+-include $(OBJ:.o=.d)
 # ------------------------------------------------------------------------------
