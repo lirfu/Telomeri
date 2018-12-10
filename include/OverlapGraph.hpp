@@ -11,21 +11,21 @@ class OverlapGraph {
 public:
     struct Edge;
 
-    typedef struct Node {
+    struct Node {
         bool anchor;
         int index;
         std::vector<Edge> edges;
         int length;
         std::string name;
-    } Node;
+    };
 
-    typedef struct Edge {
+    struct Edge {
         Node &n1, n2;
         int overlap_length;
         float overlap_score, sequence_identity, extension_score;
-    } Edge;
+    };
 
-    typedef struct {
+    struct PAFOverlap {
         std::string query_name;
         int query_len, query_start, query_end;
         char relative_strand;
@@ -34,7 +34,7 @@ public:
         int residue_matches_num;
         int alignment_block_len;
         int mapping_quality;
-    } PAFOverlap;
+    };
 
 private:
     std::vector<Node> nodes_;

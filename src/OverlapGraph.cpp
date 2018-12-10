@@ -1,10 +1,7 @@
-//
-// Created by lirfu on 08.12.18..
-//
-
 #include <iostream>
 #include <fstream>
-#include <OverlapGraph.h>
+
+#include "OverlapGraph.hpp"
 
 bool OverlapGraph::load(char *filepath) {
     std::fstream filestream;

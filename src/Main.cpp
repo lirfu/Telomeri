@@ -1,6 +1,6 @@
-
 #include <iostream>
-#include <OverlapGraph.h>
+
+#include "OverlapGraph.hpp"
 
 int main(int argc, char **argv) {
     if (argc != 3) {

@@ -4,8 +4,6 @@ project(Telomeri)
 set(CMAKE_CXX_STANDARD 17)
 
 set(SOURCE_FILES
-        src/greeter/Greeter.cpp
-        src/old/Greeter.c
         src/Main.cpp
         src/OverlapGraph.cpp)
 
