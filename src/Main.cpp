@@ -23,6 +23,35 @@ int main(int argc, char **argv) {
     DeterministicHeuristic h_es(graph, Utils::EXTENSION_SCORE);
     MonteCarloHeuristic h_mc(graph, Utils::EXTENSION_SCORE);
 
+    // TODO Concatenate paths into a single object.
+    // PathManager pm (h_os, h_es, h_mc);
+
+    // TODO Filter uniques.
+    // pm.filterUnique();
+
+    // TODO Construct groups.
+    // std::cout << "Constructing groups..." << std::endl;
+    // SomeFunc f;
+    // pm.constructGroups(f);
+
+    // TODO Re-group based on current group scores (this may be misinterpreted).
+    // SomeOtherFunc f1;
+    // pm.constructGroups(f1);
+
+    // TODO Filter rare paths (this may be misinterpreted).
+    // pm.filterRare();
+
+    // TODO Construct consensus paths.
+    // std::cout << "Building the scaffold..." << std::endl;
+    // PathBuilder::Path consensus = pm.constructConsensusPath();
+
+    // TODO Construct final result/scaffold (may need to load original files after all, but only here).
+    // char *scaffold = Utils::buildScaffold(consensus, reads_file, contigs_file);
+
+    // TODO Write result to a file.
+    // std::cout << "Writing result to: " << output_file << std::endl;
+    // Utils::write(scaffold, output_file);
+
     std::cout << "Done!" << std::endl;
     return 0;
 }
