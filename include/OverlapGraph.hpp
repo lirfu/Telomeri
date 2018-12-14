@@ -1,6 +1,5 @@
 #ifndef OVERLAP_GRAPH_HPP
 #define OVERLAP_GRAPH_HPP
-#pragma once
 
 #include <vector>
 #include <string>
@@ -52,9 +51,10 @@ public:
     /**
      * Loads the given .paf file and constructs an overlap graph from it.
      * @param filepath String path to the file.
+     * @param anchors The inputs will be anchors.
      * @return false if an error occurred.
      */
-    bool load(char *filepath);
+    bool load(char *filepath, bool anchors);
 
 private:
     /**

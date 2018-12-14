@@ -1,9 +1,10 @@
 #include <iostream>
 #include <fstream>
+#include <Utils.hpp>
 
 #include "OverlapGraph.hpp"
 
-bool OverlapGraph::load(char *filepath) {
+bool OverlapGraph::load(char *filepath, bool anchors) {
     std::fstream filestream;
     filestream.open(filepath, std::fstream::in);
     if (!filestream) {
@@ -11,8 +12,8 @@ bool OverlapGraph::load(char *filepath) {
         return false;
     }
 
+    // Read line-by-line, check filter and build nodes.
     PAFOverlap o;
-    int i = 0;
     while (filestream
             >> o.query_name
             >> o.query_len
@@ -26,14 +27,19 @@ bool OverlapGraph::load(char *filepath) {
             >> o.residue_matches_num
             >> o.alignment_block_len
             >> o.mapping_quality) {
-//        TODO Remove, this for testing.
-//        if (i++ > 0) break;
-//        std::cout << o.query_name << "," << o.query_len << "," << o.query_start << "," << o.query_end << ","
-//                  << o.relative_strand << ","
-//                  << o.target_name << "," << o.target_len << "," << o.target_start << "," << o.target_end << ","
-//                  << o.residue_matches_num << "," << o.alignment_block_len << "," << o.mapping_quality << std::endl;
+
+        ContigPosition pos;
+        if (anchors) {
+            // Checks the position of the contig by checking name starts with 'ctg'.
+            // If none starts with this template, decision defaults to contig-read format.
+            pos = Utils::startsWithInsensitive(o.target_name, "ctg") == 0 ?
+                  ContigPosition::TARGET : ContigPosition::QUERY;
+        } else {
+            pos = ContigPosition::NONE;
+        }
+
         if (!filter(o)) {
-            buildFrom(o, ContigPosition::QUERY); //TODO Send proper ContigPosition
+            buildFrom(o, pos);
         }
     }
 

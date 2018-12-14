@@ -1,6 +1,5 @@
 #include <iostream>
-
-#include "OverlapGraph.hpp"
+#include <OverlapGraph.hpp>
 
 int main(int argc, char **argv) {
     if (argc != 3) {
@@ -10,10 +9,13 @@ int main(int argc, char **argv) {
     }
 
     // Construct overlap graph from both files.
+    std::cout << "Loading files..." << std::endl;
     OverlapGraph graph;
-    if (!graph.load(argv[1]) || graph.load(argv[2])) {
+    if (!graph.load(argv[1], false) || !graph.load(argv[2], true)) {
         return 1;
     }
+
+    std::cout << "Done!" << std::endl;
 
     return 0;
 }
