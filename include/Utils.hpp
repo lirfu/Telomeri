@@ -23,6 +23,10 @@ namespace Utils {
         }
         return true;
     }
+
+    enum Metrics {
+        EXTENSION_SCORE, OVERLAP_SCORE
+    };
 };
 
 

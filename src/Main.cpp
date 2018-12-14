@@ -1,5 +1,7 @@
 #include <iostream>
 #include <OverlapGraph.hpp>
+#include <DeterministicHeuristic.hpp>
+#include <MonteCarloHeuristic.hpp>
 
 int main(int argc, char **argv) {
     if (argc != 3) {
@@ -15,7 +17,12 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    std::cout << "Done!" << std::endl;
+    // Construct paths with following heuristics.
+    std::cout << "Calculating paths..." << std::endl;
+    DeterministicHeuristic h_os(graph, Utils::OVERLAP_SCORE);
+    DeterministicHeuristic h_es(graph, Utils::EXTENSION_SCORE);
+    MonteCarloHeuristic h_mc(graph, Utils::EXTENSION_SCORE);
 
+    std::cout << "Done!" << std::endl;
     return 0;
 }
