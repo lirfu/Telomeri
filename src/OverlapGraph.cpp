@@ -47,8 +47,47 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
 }
 
 bool OverlapGraph::filter(const OverlapGraph::PAFOverlap &overlap) const {
-    // TODO Domagoj
-    return true;
+    int query_overlap_length = overlap.query_end - overlap.query_start;
+    int target_overlap_length = overlap.target_end - overlap.target_start;
+    int query_overhang_length = overlap.query_len - overlap.query_end;
+    int target_overhang_length = overlap.target_len - overlap.target_end;
+    float overlap_length;
+    float overhang_length;
+    float total_length;
+
+    switch (filter_params_.mode) {
+        case MIN:
+            overlap_length = std::min(query_overlap_length, target_overlap_length);
+            overhang_length = std::min(query_overhang_length, target_overhang_length);
+            total_length = std::min(overlap.query_len, overlap.target_len);
+            break;
+        case MAX:
+            overlap_length = std::max(query_overlap_length, target_overlap_length);
+            overhang_length = std::max(query_overhang_length, target_overhang_length);
+            total_length = std::max(overlap.query_len, overlap.target_len);
+            break;
+        case AVG:
+            overlap_length = (query_overlap_length + target_overlap_length) / 2.0f;
+            overhang_length = (query_overhang_length + target_overhang_length) / 2.0f;
+            total_length = (overlap.query_len + overlap.target_len) / 2.0f;
+            break;
+        case SUM:
+            overlap_length = query_overlap_length + target_overlap_length;
+            overhang_length = query_overhang_length + target_overhang_length;
+            total_length = overlap.query_len + overlap.target_len;
+            break;
+        default:
+            return false;
+    }
+
+    if (overlap_length < filter_params_.min_overlap_length
+        || (overlap_length / total_length) < filter_params_.min_overlap_percentage) {
+        return false;
+    }
+
+    return !(overhang_length > filter_params_.min_overlap_length
+             || (overhang_length / overlap_length) > filter_params_.max_overhang_percentage);
+
 }
 
 void OverlapGraph::buildFrom(
@@ -67,7 +106,7 @@ void OverlapGraph::buildFrom(
             qn_index = qn.index;  // Remember node index.
         }
     }
-    
+
     int tn_index; // Target node index in internal vector. Needed for edge.
     { // Create target node.
         Node tn(pos == ContigPosition::TARGET,
@@ -95,7 +134,7 @@ int OverlapGraph::nodeIndex(const Node& node) {
     for (int i = 0, n = static_cast<int>(nodes_.size()); i < n; i++) {
         if (nodes_[i] == node) {
             return i;
-        } 
+        }
     }
     return -1;
 }
@@ -104,7 +143,7 @@ int OverlapGraph::nodeIndex(const Node& node) {
 OverlapGraph::Node::Node(bool anchor, int index, int length,
         const std::string& name)
     : anchor(anchor), index(index), length(length), name(name) {}
- 
+
 
 bool OverlapGraph::Node::operator==(const Node& rhs) const {
     return name == rhs.name;

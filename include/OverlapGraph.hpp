@@ -43,9 +43,25 @@ public:
         int mapping_quality;
     };
 
+    enum LengthCalculationMode {
+        MIN, /** Smaller of the lengths is used in filter comparisons */
+        MAX, /** Larger of the lengths is used in filter comparisons */
+        AVG, /** Average value of the lengths is used in filter comparisons */
+        SUM /** Sum of lengths is used in filter comparisons */
+    };
+
+    struct FilterParameters {
+        LengthCalculationMode mode; /** Mode of length calculation */
+        int min_overlap_length; /** Minimum required overlap length */
+        float min_overlap_percentage; /** Minimum required overlap length, as percentage to total length */
+        int max_overhang_length; /** Maximum allowed overhang length */
+        float max_overhang_percentage; /** Maximum allowed overhang length, as percentage of overlap length */
+    };
+
 private:
     std::vector<Node> nodes_;
     std::vector<Edge> edges_;
+    FilterParameters filter_params_;
 
 public:
     /**
