@@ -85,8 +85,8 @@ bool OverlapGraph::filter(const OverlapGraph::PAFOverlap &overlap) const {
         return false;
     }
 
-    return !(overhang_length > filter_params_.min_overlap_length
-             || (overhang_length / overlap_length) > filter_params_.max_overhang_percentage);
+    return overhang_length <= filter_params_.max_overhang_length
+             && (overhang_length / overlap_length) <= filter_params_.max_overhang_percentage;
 
 }
 
