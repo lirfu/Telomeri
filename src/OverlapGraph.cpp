@@ -4,6 +4,13 @@
 
 #include "OverlapGraph.hpp"
 
+int getQueryOverlapLength(const OverlapGraph::PAFOverlap &overlap);
+int getTargetOverlapLength(const OverlapGraph::PAFOverlap &overlap);
+int getQueryOverhangLength(const OverlapGraph::PAFOverlap &overlap);
+int getTargetOverhangLength(const OverlapGraph::PAFOverlap &overlap);
+int getQueryExtensionLength(const OverlapGraph::PAFOverlap &overlap);
+int getTargetExtensionLength(const OverlapGraph::PAFOverlap &overlap);
+
 bool OverlapGraph::load(char *filepath, bool anchors) {
     std::fstream filestream;
     filestream.open(filepath, std::fstream::in);
@@ -47,10 +54,10 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
 }
 
 bool OverlapGraph::filter(const OverlapGraph::PAFOverlap &overlap) const {
-    int query_overlap_length = overlap.query_end - overlap.query_start;
-    int target_overlap_length = overlap.target_end - overlap.target_start;
-    int query_overhang_length = overlap.query_len - overlap.query_end;
-    int target_overhang_length = overlap.target_len - overlap.target_end;
+    int query_overlap_length = getQueryOverlapLength(overlap);
+    int target_overlap_length = getTargetOverlapLength(overlap);
+    int query_overhang_length = getQueryOverhangLength(overlap);
+    int target_overhang_length = getTargetOverhangLength(overlap);
     float overlap_length;
     float overhang_length;
     float total_length;
@@ -120,14 +127,21 @@ void OverlapGraph::buildFrom(
         }
     }
 
-    // Create edge and emplace it into internal vector.
-    edges_.emplace_back(
-            nodes_[qn_index], // First node of the edge.
-            nodes_[tn_index], // Second node of the edge.
-            0,     // TODO Calculate overlap length (OL).
-            0.0f,  // TODO Calculate overlap score (OS).
-            0.0f,  // TODO Calculate sequence identity (SI).
-            0.0f); // TODO Calculate extension score (ES).
+    { // Create edge and emplace it into internal vector.
+        int query_overlap_length = getQueryOverlapLength(overlap);
+        int target_overlap_length = getTargetOverlapLength(overlap);
+        int query_overhang_length = getQueryOverhangLength(overlap);
+        int target_overhang_length = getTargetOverhangLength(overlap);
+        int qurey_extension_length = getQueryExtensionLength(overlap);
+        int target_extension_length = getTargetExtensionLength(overlap);
+        edges_.emplace_back(
+                nodes_[qn_index], // First node of the edge.
+                nodes_[tn_index], // Second node of the edge.
+                0,     // TODO Calculate overlap length (OL).
+                0.0f,  // TODO Calculate overlap score (OS).
+                0.0f,  // TODO Calculate sequence identity (SI).
+                0.0f); // TODO Calculate extension score (ES).
+    }
 }
 
 int OverlapGraph::nodeIndex(const Node& node) {
@@ -156,3 +170,26 @@ OverlapGraph::Edge::Edge(const Node &n1, const Node &n2, int overlap_length,
             overlap_score(overlap_score), sequence_identity(sequence_identity),
             extension_score(extension_score) {}
 
+int getQueryOverlapLength(const OverlapGraph::PAFOverlap &overlap) {
+    return overlap.query_end - overlap.query_start;
+}
+
+int getTargetOverlapLength(const OverlapGraph::PAFOverlap &overlap) {
+    return overlap.target_end - overlap.target_start;
+}
+
+int getQueryOverhangLength(const OverlapGraph::PAFOverlap &overlap) {
+    return overlap.query_len - overlap.query_end; // TODO: CHECK IF CORRECT!
+}
+
+int getTargetOverhangLength(const OverlapGraph::PAFOverlap &overlap) {
+    return overlap.target_len - overlap.target_end; // TODO: CHECK IF CORRECT!
+}
+
+int getQueryExtensionLength(const OverlapGraph::PAFOverlap &overlap) {
+    return overlap.query_len - overlap.query_end;
+}
+
+int getTargetExtensionLength(const OverlapGraph::PAFOverlap &overlap) {
+    return overlap.query_start;
+}
