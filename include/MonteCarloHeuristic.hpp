@@ -5,8 +5,8 @@
 #ifndef TELOMERI_HEURISTICMC_H
 #define TELOMERI_HEURISTICMC_H
 
-
 #include "PathBuilder.hpp"
+#include <Utils.hpp>
 
 class MonteCarloHeuristic : public PathBuilder {
 public:

@@ -10,6 +10,7 @@ int getQueryOverhangLength(const OverlapGraph::PAFOverlap &overlap);
 int getTargetOverhangLength(const OverlapGraph::PAFOverlap &overlap);
 int getQueryExtensionLength(const OverlapGraph::PAFOverlap &overlap);
 int getTargetExtensionLength(const OverlapGraph::PAFOverlap &overlap);
+float getSequenceIdentity(const OverlapGraph::PAFOverlap &overlap);
 
 bool OverlapGraph::load(char *filepath, bool anchors) {
     std::fstream filestream;
@@ -104,7 +105,7 @@ void OverlapGraph::buildFrom(
     int qn_index; // Query node index in internal vector. Needed for edge.
     { // Create query node.
         Node qn(pos == ContigPosition::QUERY,
-                nodes_.size(),        // Will be added at vector end.
+                nodes_.size(),    // Will be added at vector end.
                 overlap.query_len,
                 overlap.query_name);
         qn_index = nodeIndex(qn); // Fetch node index in internal vector.
@@ -117,7 +118,7 @@ void OverlapGraph::buildFrom(
     int tn_index; // Target node index in internal vector. Needed for edge.
     { // Create target node.
         Node tn(pos == ContigPosition::TARGET,
-                nodes_.size(),        // Will be added at vector end.
+                nodes_.size(),    // Will be added at vector end.
                 overlap.target_len,
                 overlap.query_name);
         tn_index = nodeIndex(tn); // Fetch node index in internal vector.
@@ -130,17 +131,23 @@ void OverlapGraph::buildFrom(
     { // Create edge and emplace it into internal vector.
         int query_overlap_length = getQueryOverlapLength(overlap);
         int target_overlap_length = getTargetOverlapLength(overlap);
-        int query_overhang_length = getQueryOverhangLength(overlap);
-        int target_overhang_length = getTargetOverhangLength(overlap);
-        int qurey_extension_length = getQueryExtensionLength(overlap);
-        int target_extension_length = getTargetExtensionLength(overlap);
+        int query_extension_length = getQueryExtensionLength(overlap);
+        float sequence_identity = getSequenceIdentity(overlap);
+       
+        float overlap_score = (query_overlap_length + target_overlap_length)
+            * sequence_identity / 2.0f;
+
+        // Score of query extending target.
+        float extension_score = overlap_score + query_extension_length / 2.0f
+            - (target_overlap_length + query_overlap_length) / 2.0f;
+
         edges_.emplace_back(
                 nodes_[qn_index], // First node of the edge.
                 nodes_[tn_index], // Second node of the edge.
-                0,     // TODO Calculate overlap length (OL).
-                0.0f,  // TODO Calculate overlap score (OS).
-                0.0f,  // TODO Calculate sequence identity (SI).
-                0.0f); // TODO Calculate extension score (ES).
+                query_overlap_length,
+                overlap_score,
+                sequence_identity,
+                extension_score); 
     }
 }
 
@@ -179,17 +186,22 @@ int getTargetOverlapLength(const OverlapGraph::PAFOverlap &overlap) {
 }
 
 int getQueryOverhangLength(const OverlapGraph::PAFOverlap &overlap) {
-    return overlap.query_len - overlap.query_end; // TODO: CHECK IF CORRECT!
-}
-
-int getTargetOverhangLength(const OverlapGraph::PAFOverlap &overlap) {
-    return overlap.target_len - overlap.target_end; // TODO: CHECK IF CORRECT!
-}
-
-int getQueryExtensionLength(const OverlapGraph::PAFOverlap &overlap) {
     return overlap.query_len - overlap.query_end;
 }
 
-int getTargetExtensionLength(const OverlapGraph::PAFOverlap &overlap) {
+int getTargetOverhangLength(const OverlapGraph::PAFOverlap &overlap) {
+    return overlap.target_start;
+}
+
+int getQueryExtensionLength(const OverlapGraph::PAFOverlap &overlap) {
     return overlap.query_start;
+}
+
+int getTargetExtensionLength(const OverlapGraph::PAFOverlap &overlap) {
+    return overlap.target_len - overlap.target_end;
+}
+
+float getSequenceIdentity(const OverlapGraph::PAFOverlap &overlap) {
+    return overlap.residue_matches_num / 
+        std::min(overlap.query_len, overlap.target_len);
 }
