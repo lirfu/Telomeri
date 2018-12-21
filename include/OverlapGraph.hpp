@@ -17,8 +17,9 @@ public:
         int length; /**< Length of sequence. */
         std::string name; /**< Unique sequence (node) name. */
 
-        Node(bool anchor, int index, int length, const std::string& name);
-        bool operator==(const Node& rhs) const;
+        Node(bool anchor, int index, int length, const std::string &name);
+
+        bool operator==(const Node &rhs) const;
     };
 
     struct Edge {
@@ -28,8 +29,8 @@ public:
         float overlap_score, sequence_identity, extension_score;
 
         Edge(const Node &n1, const Node &n2, int overlap_length,
-                float overlap_score, float sequence_identity,
-                float extension_score);
+             float overlap_score, float sequence_identity,
+             float extension_score);
     };
 
     struct PAFOverlap {
@@ -58,7 +59,6 @@ public:
         float max_overhang_percentage; /** Maximum allowed overhang length, as percentage of overlap length */
     };
 
-private:
     std::vector<Node> nodes_;
     std::vector<Edge> edges_;
     FilterParameters filter_params_;
@@ -71,6 +71,11 @@ public:
      * @return false if an error occurred.
      */
     bool load(char *filepath, bool anchors);
+
+    /** Variable used to specify the number of lines read from a file.
+     * Used to cut down the loading time when testing.
+     * By default, loads the whole file (is equal to 0).*/
+    int test_load_num_ = 0;
 
 private:
     /**
@@ -95,13 +100,13 @@ private:
      * @return index of the node in internal vector if it is present in internal
      * vectors. If it is not present, function returns -1.
      */
-    int nodeIndex(const Node& node);
+    int nodeIndex(const Node &node);
 };
 
 enum class ContigPosition : char {
     NONE,  /**< Contig is not part of overlap (overlap is between reads). */
     QUERY,  /**< Contig is in the query part of the overlap. */
     TARGET    /**< Contig is in the target part of the overlap. */
-}; 
+};
 
 #endif

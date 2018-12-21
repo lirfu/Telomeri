@@ -5,11 +5,17 @@
 #include "OverlapGraph.hpp"
 
 int getQueryOverlapLength(const OverlapGraph::PAFOverlap &overlap);
+
 int getTargetOverlapLength(const OverlapGraph::PAFOverlap &overlap);
+
 int getQueryOverhangLength(const OverlapGraph::PAFOverlap &overlap);
+
 int getTargetOverhangLength(const OverlapGraph::PAFOverlap &overlap);
+
 int getQueryExtensionLength(const OverlapGraph::PAFOverlap &overlap);
+
 int getTargetExtensionLength(const OverlapGraph::PAFOverlap &overlap);
+
 float getSequenceIdentity(const OverlapGraph::PAFOverlap &overlap);
 
 bool OverlapGraph::load(char *filepath, bool anchors) {
@@ -22,6 +28,8 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
 
     // Read line-by-line, check filter and build nodes.
     PAFOverlap o;
+    std::string s;
+    int i = 0;
     while (filestream
             >> o.query_name
             >> o.query_len
@@ -36,6 +44,12 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
             >> o.alignment_block_len
             >> o.mapping_quality) {
 
+        // Ignore these last 4 unspecified outputs.
+        filestream >> s;
+        filestream >> s;
+        filestream >> s;
+        filestream >> s;
+
         ContigPosition pos;
         if (anchors) {
             // Checks the position of the contig by checking name starts with 'ctg'.
@@ -49,8 +63,14 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
         if (!filter(o)) {
             buildFrom(o, pos);
         }
+
+        // When testing, load only N instances.
+        if (test_load_num_ > 0 && test_load_num_ < ++i) {
+            break;
+        }
     }
 
+    filestream.close();
     return true;
 }
 
@@ -94,7 +114,7 @@ bool OverlapGraph::filter(const OverlapGraph::PAFOverlap &overlap) const {
     }
 
     return overhang_length <= filter_params_.max_overhang_length
-             && (overhang_length / overlap_length) <= filter_params_.max_overhang_percentage;
+           && (overhang_length / overlap_length) <= filter_params_.max_overhang_percentage;
 
 }
 
@@ -133,13 +153,13 @@ void OverlapGraph::buildFrom(
         int target_overlap_length = getTargetOverlapLength(overlap);
         int query_extension_length = getQueryExtensionLength(overlap);
         float sequence_identity = getSequenceIdentity(overlap);
-       
+
         float overlap_score = (query_overlap_length + target_overlap_length)
-            * sequence_identity / 2.0f;
+                              * sequence_identity / 2.0f;
 
         // Score of query extending target.
         float extension_score = overlap_score + query_extension_length / 2.0f
-            - (target_overlap_length + query_overlap_length) / 2.0f;
+                                - (target_overlap_length + query_overlap_length) / 2.0f;
 
         edges_.emplace_back(
                 nodes_[qn_index], // First node of the edge.
@@ -147,11 +167,11 @@ void OverlapGraph::buildFrom(
                 query_overlap_length,
                 overlap_score,
                 sequence_identity,
-                extension_score); 
+                extension_score);
     }
 }
 
-int OverlapGraph::nodeIndex(const Node& node) {
+int OverlapGraph::nodeIndex(const Node &node) {
     for (int i = 0, n = static_cast<int>(nodes_.size()); i < n; i++) {
         if (nodes_[i] == node) {
             return i;
@@ -162,20 +182,20 @@ int OverlapGraph::nodeIndex(const Node& node) {
 
 
 OverlapGraph::Node::Node(bool anchor, int index, int length,
-        const std::string& name)
-    : anchor(anchor), index(index), length(length), name(name) {}
+                         const std::string &name)
+        : anchor(anchor), index(index), length(length), name(name) {}
 
 
-bool OverlapGraph::Node::operator==(const Node& rhs) const {
+bool OverlapGraph::Node::operator==(const Node &rhs) const {
     return name == rhs.name;
 }
 
 OverlapGraph::Edge::Edge(const Node &n1, const Node &n2, int overlap_length,
-                float overlap_score, float sequence_identity,
-                float extension_score)
+                         float overlap_score, float sequence_identity,
+                         float extension_score)
         : n1(n1), n2(n2), overlap_length(overlap_length),
-            overlap_score(overlap_score), sequence_identity(sequence_identity),
-            extension_score(extension_score) {}
+          overlap_score(overlap_score), sequence_identity(sequence_identity),
+          extension_score(extension_score) {}
 
 int getQueryOverlapLength(const OverlapGraph::PAFOverlap &overlap) {
     return overlap.query_end - overlap.query_start;
@@ -202,6 +222,6 @@ int getTargetExtensionLength(const OverlapGraph::PAFOverlap &overlap) {
 }
 
 float getSequenceIdentity(const OverlapGraph::PAFOverlap &overlap) {
-    return overlap.residue_matches_num / 
-        std::min(overlap.query_len, overlap.target_len);
+    return overlap.residue_matches_num /
+           std::min(overlap.query_len, overlap.target_len);
 }

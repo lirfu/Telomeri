@@ -1,6 +1,7 @@
 #include <iostream>
 #include <OverlapGraph.hpp>
-#include <DeterministicHeuristic.hpp>
+#include <Utils.hpp>
+#include <PathBuilder.hpp>
 #include <MonteCarloHeuristic.hpp>
 
 int main(int argc, char **argv) {
@@ -13,17 +14,21 @@ int main(int argc, char **argv) {
     // Construct overlap graph from both files.
     std::cout << "Loading files..." << std::endl;
     OverlapGraph graph;
+
+    // FIXME Just for testing.
+    graph.test_load_num_ = 10;
+
     if (!graph.load(argv[1], false) || !graph.load(argv[2], true)) {
         return 1;
     }
 
     // Construct paths with following heuristics.
     std::cout << "Calculating paths..." << std::endl;
-    DeterministicHeuristic h_os(graph, Utils::OVERLAP_SCORE);
-    DeterministicHeuristic h_es(graph, Utils::EXTENSION_SCORE);
-    MonteCarloHeuristic h_mc(graph, Utils::EXTENSION_SCORE);
+//    DeterministicHeuristic h_os(graph, Utils::Metrics::OVERLAP_SCORE);
+//    DeterministicHeuristic h_es(graph, Utils::Metrics::EXTENSION_SCORE);
+//    MonteCarloHeuristic h_mc(graph, 3, Utils::Metrics::EXTENSION_SCORE);
 
-    // TODO Concatenate paths into a single object.
+    // TODO Aggregate paths into a single object.
     // PathManager pm (h_os, h_es, h_mc);
 
     // TODO Filter uniques.
