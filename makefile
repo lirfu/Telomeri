@@ -67,6 +67,9 @@ SRC = $(shell find $(SRC_DIR) -name '*.c' -o -name '*.cpp')
 
 # All object files.
 OBJ = $(SRC:$(SRC_DIR)/%=$(OBJ_DIR)/%.o)
+
+# Make dependency files - with paths from the project root.
+DEP = $(OBJ:.o=.d)
 # ------------------------------------------------------------------------------
 
 
@@ -103,6 +106,9 @@ TEST_SRC = $(shell find $(TEST_DIR) -name '*.c' -o -name '*.cpp')
 # Test object files (only test files).
 TEST_OBJ = $(TEST_SRC:$(TEST_DIR)/%=$(TEST_DIR)/$(OBJ_DIR)/%.o)
 
+# Test make dependency files (only test files).
+TEST_DEP = $(TEST_OBJ:.o=.d)
+
 # Object file containing 'main()' function.
 MAIN_OBJ = $(MAIN_SOURCE_FILE:$(SRC_DIR)/%=$(OBJ_DIR)/%.o)
 
@@ -129,7 +135,7 @@ $(TEST_DIR)/$(OBJ_DIR)/%.c.o: $(TEST_DIR)/%.c
 # --------------------------------- CLEANING -----------------------------------
 # Remove object files.
 clean:
-	$(RM) $(OBJ) $(TEST_OBJ)
+	$(RM) $(OBJ) $(DEP) $(TEST_OBJ) $(TEST_DEP)
 
 # Remove object directories and executable files.
 purge:
