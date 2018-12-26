@@ -13,14 +13,14 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num, const U
     // For each anchor-node as starting point.
     for (const OverlapGraph::Node &start_node : g.nodes_) {
 #ifdef DEBUG
-        std::cout << "MCHeur node: " << start_node.index << std::endl;
+        std::cout << "MCHeur node: "<< (start_node.anchor ? '*':' ') << start_node.index << std::endl;
 #endif
         // Skip read-nodes.
         if (!start_node.anchor) {
             continue;
         }
 
-        // Used for monitoring the number of repeated path re-build attempts.
+        // Used for monitoring the number of path re-build attempts (dead-ends).
         // Blocks the possibility of +oo loops when re-building paths.
         // After N attempts, path is just dropped.
         int rebuilds = 0;
@@ -110,5 +110,23 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num, const U
 }
 
 void PathManager::buildDeterministic(const OverlapGraph &g, int repeat_num, const Utils::Metrics &metric) {
-  // TODO
+    // TODO
+}
+
+void PathManager::filterUnique() {
+//#ifdef DEBUG
+//    std::cout<<"============ Unique before:"<<std::endl;
+//    for (Utils::Path p : paths_)
+//        std::cout << p.str() << std::endl;
+//    std::cout<<"============ Unique after:"<<std::endl;
+//#endif
+
+    auto last = std::unique(paths_.begin(), paths_.end(), Utils::Path::equals);
+    paths_.erase(last, paths_.end()); // Reallocate vector and remove undefined empty slots.
+
+//#ifdef DEBUG
+//    for (Utils::Path p : paths_)
+//        std::cout << p.str() << std::endl;
+//    std::cout<<"=========================="<<std::endl;
+//#endif
 }

@@ -28,8 +28,8 @@ int main(int argc, char **argv) {
     pm.buildDeterministic(graph, 3, Utils::Metrics::EXTENSION_SCORE);
     pm.buildDeterministic(graph, 3, Utils::Metrics::OVERLAP_SCORE);
 
-    // TODO Filter uniques.
-    // pm.filterUnique();
+    // Filter uniques.
+     pm.filterUnique();
 
     // TODO Construct groups.
     // std::cout << "Constructing groups..." << std::endl;

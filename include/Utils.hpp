@@ -49,8 +49,9 @@ namespace Utils {
         std::vector<const OverlapGraph::Node *> nodes_;
         std::vector<const OverlapGraph::Edge *> edges_;
 
-        int compare(Path p) {
-            // TODO hash compare or informativeness(entropy) or ...
+        static bool equals(const Path &p1, const Path &p2) {
+            return p1.nodes_.size() == p2.nodes_.size()
+                   && std::equal(p1.nodes_.begin(), p1.nodes_.end(), p2.nodes_.begin());
         }
 
         std::string str() const {
