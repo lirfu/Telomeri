@@ -3,12 +3,14 @@ project(Telomeri)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(SOURCE_FILES
-        src/Main.cpp
+set(SOURCE_FILES src/Main.cpp
         src/OverlapGraph.cpp
         src/PathBuilder.cpp
         src/DeterministicHeuristic.cpp
         src/MonteCarloHeuristic.cpp)
+
+# Enables the debug printouts.
+#add_definitions(-DDEBUG)
 
 include_directories(include/ test/)
 

@@ -64,6 +64,13 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
             buildFrom(o, pos);
         }
 
+#ifdef DEBUG
+        std::cout << "OG add info: " << nodes_.size() << " " << edges_.size() << " "
+                  << (ContigPosition::QUERY == pos)
+                  << (ContigPosition::TARGET == pos)
+                  << (ContigPosition::NONE == pos) << " " << filepath << std::endl;
+#endif
+
         // When testing, load only N instances.
         if (test_load_num_ > 0 && test_load_num_ < ++i) {
             break;
