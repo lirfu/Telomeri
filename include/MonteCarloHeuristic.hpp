@@ -6,11 +6,17 @@
 #define TELOMERI_HEURISTICMC_H
 
 #include "PathBuilder.hpp"
+#include <OverlapGraph.hpp>
 #include <Utils.hpp>
 
+#define REBUILD_ATTEMPTS 3
+
 class MonteCarloHeuristic : public PathBuilder {
+private:
 public:
-    MonteCarloHeuristic(const OverlapGraph &g, const Utils::Metrics &metric);
+    MonteCarloHeuristic(const OverlapGraph &g, int repeat_num, const Utils::Metrics &metric);
+
+    float getMetric(const OverlapGraph::Edge &e, const Utils::Metrics &metric) const;
 };
 
 

@@ -26,9 +26,9 @@ int main(int argc, char **argv) {
     std::cout << "Calculating paths..." << std::endl;
 //    DeterministicHeuristic h_os(graph, Utils::Metrics::OVERLAP_SCORE);
 //    DeterministicHeuristic h_es(graph, Utils::Metrics::EXTENSION_SCORE);
-//    MonteCarloHeuristic h_mc(graph, 3, Utils::Metrics::EXTENSION_SCORE);
+    MonteCarloHeuristic h_mc(graph, 3, Utils::Metrics::EXTENSION_SCORE);
 
-    // TODO Aggregate paths into a single object.
+    // TODO Aggregate paths into a single object. Why not make heuristics build paths to the same path vector?
     // PathManager pm (h_os, h_es, h_mc);
 
     // TODO Filter uniques.

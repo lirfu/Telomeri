@@ -6,13 +6,14 @@
 #define TELOMERI_UTILS_H
 
 #include <string>
+#include <algorithm>
 
 namespace Utils {
     /** Checks if string starts with given template, insensitive to case (toLower).
      * @param str String to check.
      * @param temp Template to check with.
      * @return true - if string starts with given template. */
-    bool startsWithInsensitive(const std::string &str, const std::string &temp) {
+    static bool startsWithInsensitive(const std::string &str, const std::string &temp) {
         if (str.length() < temp.length()) {
             return false;
         }
@@ -24,7 +25,12 @@ namespace Utils {
         return true;
     }
 
-    enum Metrics {
+    template<typename T>
+    static bool contains(const std::vector<T> &v, const T &e) {
+        return std::find(v.begin(), v.end(), e) != v.end();
+    }
+
+    enum class Metrics {
         EXTENSION_SCORE, OVERLAP_SCORE
     };
 };
