@@ -147,7 +147,7 @@ void OverlapGraph::buildFrom(
         Node tn(pos == ContigPosition::TARGET,
                 nodes_.size(),    // Will be added at vector end.
                 overlap.target_len,
-                overlap.query_name);
+                overlap.target_name);
         tn_index = nodeIndex(tn); // Fetch node index in internal vector.
         if (tn_index < 0) {       // Check if node is present in vector.
             nodes_.push_back(tn); // Add node to end of internal vector.
