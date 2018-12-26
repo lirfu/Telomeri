@@ -1,22 +1,13 @@
 //
-// Created by lirfu on 14.12.18..
+// Created by lirfu on 26.12.18..
 //
 
 #include <OverlapGraph.hpp>
 #include <Utils.hpp>
-#include <MonteCarloHeuristic.hpp>
+#include <PathManager.hpp>
 #include <iostream>
 
-float MonteCarloHeuristic::getMetric(const OverlapGraph::Edge &e, const Utils::Metrics &metric) const {
-    switch (metric) {
-        case Utils::Metrics::EXTENSION_SCORE:
-            return e.extension_score;
-        case Utils::Metrics::OVERLAP_SCORE:
-            return e.overlap_score;
-    }
-}
-
-MonteCarloHeuristic::MonteCarloHeuristic(const OverlapGraph &g, int repeat_num, const Utils::Metrics &metric) {
+void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num, const Utils::Metrics &metric) {
     std::srand(42);
 
     // For each anchor-node as starting point.
@@ -36,7 +27,7 @@ MonteCarloHeuristic::MonteCarloHeuristic(const OverlapGraph &g, int repeat_num, 
 
         // Repeat path building from this starting point.
         for (int i = 0; i < repeat_num; i++) {
-            Path p;
+            Utils::Path p;
             const OverlapGraph::Node *n = &start_node;
 
             // Store the starting node.
@@ -116,5 +107,8 @@ MonteCarloHeuristic::MonteCarloHeuristic(const OverlapGraph &g, int repeat_num, 
             }
         }
     }
+}
 
+void PathManager::buildDeterministic(const OverlapGraph &g, int repeat_num, const Utils::Metrics &metric) {
+  // TODO
 }
