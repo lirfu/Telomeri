@@ -64,18 +64,25 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
             buildFrom(o, pos);
         }
 
+        ++i;
 #ifdef DEBUG
-        std::cout << "OG add info: " << nodes_.size() << " " << edges_.size() << " "
-                  << (ContigPosition::QUERY == pos)
-                  << (ContigPosition::TARGET == pos)
-                  << (ContigPosition::NONE == pos) << " " << filepath << std::endl;
+        if (i % 1000 == 0)
+            std::cout << "-> " << i << " entries loaded " << std::endl;
+//        std::cout << "OG add info: " << nodes_.size() << " " << edges_.size() << " "
+//                  << (ContigPosition::QUERY == pos)
+//                  << (ContigPosition::TARGET == pos)
+//                  << (ContigPosition::NONE == pos) << " " << o.query_name << " " << filepath << std::endl;
 #endif
 
         // When testing, load only N instances.
-        if (test_load_num_ > 0 && test_load_num_ < ++i) {
+        if (test_load_num_ > 0 && test_load_num_ < i) {
             break;
         }
     }
+
+#ifdef DEBUG
+    std::cout << "Stored " << nodes_.size() << '/' << i << " nodes" << std::endl;
+#endif
 
     filestream.close();
     return true;
@@ -188,7 +195,7 @@ int OverlapGraph::nodeIndex(const Node &node) {
 }
 
 
-OverlapGraph::Node::Node(bool anchor, int index, int length,
+OverlapGraph::Node::Node(bool anchor, uint index, uint length,
                          const std::string &name)
         : anchor(anchor), index(index), length(length), name(name) {}
 

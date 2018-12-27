@@ -12,12 +12,12 @@ public:
 
     struct Node {
         bool anchor; /**< True if node is anchor (contig). */
-        int index; /**< Unique node ID. Equal to position in vector of nodes. */
+        uint index; /**< Unique node ID. Equal to position in vector of nodes. */
         std::vector<Edge> edges; /**< Edges that connect to this node. */
-        int length; /**< Length of sequence. */
+        uint length; /**< Length of sequence. */
         std::string name; /**< Unique sequence (node) name. */
 
-        Node(bool anchor, int index, int length, const std::string &name);
+        Node(bool anchor, uint index, uint length, const std::string &name);
 
         bool operator==(const Node &rhs) const;
     };
@@ -63,7 +63,6 @@ public:
     std::vector<Edge> edges_;
     FilterParameters filter_params_;
 
-public:
     /**
      * Loads the given .paf file and constructs an overlap graph from it.
      * @param filepath String path to the file.
@@ -75,7 +74,7 @@ public:
     /** Variable used to specify the number of lines read from a file.
      * Used to cut down the loading time when testing.
      * By default, loads the whole file (is equal to 0).*/
-    int test_load_num_ = 0;
+    uint test_load_num_ = 0;
 
 private:
     /**
