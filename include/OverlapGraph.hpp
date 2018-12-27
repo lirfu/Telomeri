@@ -102,7 +102,7 @@ private:
      * @return index of the node in internal vector if it is present in internal
      * vectors. If it is not present, function returns -1.
      */
-    int nodeIndex(const Node &node);
+    long nodeIndex(const std::string &name) const;
 };
 
 enum class ContigPosition : char {
