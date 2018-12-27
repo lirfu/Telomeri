@@ -71,6 +71,9 @@ public:
      */
     bool load(char *filepath, bool anchors);
 
+    /** Returns a string representation of the internal graph statistics. */
+    std::string stats();
+
     /** Variable used to specify the number of lines read from a file.
      * Used to cut down the loading time when testing.
      * By default, loads the whole file (is equal to 0).*/

@@ -11,15 +11,16 @@ int main(int argc, char **argv) {
     }
 
     // Construct overlap graph from both files.
-    std::cout << "Loading files..." << std::endl;
     OverlapGraph graph;
 
     // FIXME Just for testing.
-    graph.test_load_num_ = 10;
+    graph.test_load_num_ = 100000;
 
+    std::cout << "Loading files..." << std::endl;
     if (!graph.load(argv[1], false) || !graph.load(argv[2], true)) {
         return 1;
     }
+    std::cout << graph.stats() << std::endl;
 
     // Construct paths with following heuristics.
     std::cout << "Calculating paths..." << std::endl;

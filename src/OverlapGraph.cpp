@@ -2,8 +2,6 @@
 #include <fstream>
 #include <Utils.hpp>
 
-#include "OverlapGraph.hpp"
-
 int getQueryOverlapLength(const OverlapGraph::PAFOverlap &overlap);
 
 int getTargetOverlapLength(const OverlapGraph::PAFOverlap &overlap);
@@ -17,6 +15,38 @@ int getQueryExtensionLength(const OverlapGraph::PAFOverlap &overlap);
 int getTargetExtensionLength(const OverlapGraph::PAFOverlap &overlap);
 
 float getSequenceIdentity(const OverlapGraph::PAFOverlap &overlap);
+
+std::string OverlapGraph::stats() {
+    std::stringstream str;
+
+    ulong min_len = static_cast<uint>(-1), max_len = 0;
+    ulong min_con = static_cast<uint>(-1), max_con = 0;
+    ulong anchors = 0, reads = 0;
+    for (const Node &n:nodes_) {
+        n.anchor ? anchors++ : reads++;
+        if (min_len > n.length)
+            min_len = n.length;
+        if (max_len < n.length)
+            max_len = n.length;
+        if (min_con > n.edges.size())
+            min_con = n.edges.size();
+        if (max_con < n.edges.size())
+            max_con = n.edges.size();
+    }
+
+    str << "Nodes" << std::endl;
+    str << "-  anchor: " << anchors << std::endl;
+    str << "-    read: " << reads << std::endl;
+    str << "-   total: " << nodes_.size() << std::endl;
+    str << "- min_len: " << min_len << std::endl;
+    str << "- max_len: " << max_len << std::endl;
+    str << "- min_con: " << min_con << std::endl;
+    str << "- max_con: " << max_con << std::endl;
+    str << "Edges" << std::endl;
+    str << "-  total: " << edges_.size() << std::endl;
+
+    return str.str();
+}
 
 bool OverlapGraph::load(char *filepath, bool anchors) {
     std::fstream filestream;
@@ -67,7 +97,7 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
         ++i;
 #ifdef DEBUG
         if (i % 1000 == 0)
-            std::cout << "-> " << i << " entries loaded " << std::endl;
+//            std::cout << "-> " << i << " entries loaded " << std::endl;
 //        std::cout << "OG add info: " << nodes_.size() << " " << edges_.size() << " "
 //                  << (ContigPosition::QUERY == pos)
 //                  << (ContigPosition::TARGET == pos)
@@ -81,7 +111,7 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
     }
 
 #ifdef DEBUG
-    std::cout << "Stored " << nodes_.size() << '/' << i << " nodes" << std::endl;
+    std::cout << "Loaded " << nodes_.size() << '/' << i << " nodes" << std::endl;
 #endif
 
     filestream.close();
@@ -193,7 +223,6 @@ int OverlapGraph::nodeIndex(const Node &node) {
     }
     return -1;
 }
-
 
 OverlapGraph::Node::Node(bool anchor, uint index, uint length,
                          const std::string &name)
