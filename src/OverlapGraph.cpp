@@ -104,10 +104,10 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
 //                  << (ContigPosition::NONE == pos) << " " << o.query_name << " " << filepath << std::endl;
 #endif
 
-        // When testing, load only N instances.
-        if (test_load_num_ > 0 && test_load_num_ < i) {
-            break;
-        }
+            // When testing, load only N instances.
+            if (test_load_num_ > 0 && test_load_num_ < i) {
+                break;
+            }
     }
 
 #ifdef DEBUG
@@ -212,6 +212,9 @@ void OverlapGraph::buildFrom(
                 overlap_score,
                 sequence_identity,
                 extension_score);
+
+        nodes_[qn_index].edges.push_back(edges_[edges_.size() - 1]);
+        nodes_[tn_index].edges.push_back(edges_[edges_.size() - 1]);
     }
 }
 
