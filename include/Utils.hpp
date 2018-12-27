@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <chrono>
 #include "OverlapGraph.hpp"
 
 namespace Utils {
@@ -72,6 +73,32 @@ namespace Utils {
                 }
             }
             return str.str();
+        }
+    };
+
+    class Stopwatch {
+    private:
+        std::chrono::time_point<std::chrono::system_clock> start_;
+        std::chrono::time_point<std::chrono::system_clock> lapStart_;
+    public:
+        /** Start the timer. Resets internals to the current time point. */
+        void start() {
+            start_ = lapStart_ = std::chrono::system_clock::now();
+        }
+
+        /** Stop the timer and return total time. @return Total elapsed time.*/
+        double stop() {
+            auto now = std::chrono::system_clock::now();
+            std::chrono::duration<double> diff = now - start_;
+            return diff.count();
+        }
+
+        /** Return lap time and start new lap. Doesn't affect total time. @return Lap time. */
+        double lap() {
+            auto now = std::chrono::system_clock::now();
+            std::chrono::duration<double> diff = now - lapStart_;
+            lapStart_ = now;
+            return diff.count();
         }
     };
 };

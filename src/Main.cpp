@@ -10,6 +10,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    Utils::Stopwatch timer;
+    timer.start();
+
     // Construct overlap graph from both files.
     OverlapGraph graph;
 
@@ -20,7 +23,7 @@ int main(int argc, char **argv) {
     if (!graph.load(argv[1], false) || !graph.load(argv[2], true)) {
         return 1;
     }
-    std::cout << graph.stats() << std::endl;
+    std::cout << "Done (" << timer.lap() << "s)" << std::endl << graph.stats() << std::endl;
 
     // Construct paths with following heuristics.
     std::cout << "Calculating paths..." << std::endl;
@@ -30,7 +33,9 @@ int main(int argc, char **argv) {
     pm.buildDeterministic(graph, 3, Utils::Metrics::OVERLAP_SCORE);
 
     // Filter uniques.
-     pm.filterUnique();
+//    pm.filterUnique();
+
+    std::cout << "Done (" << timer.lap() << "s)" << std::endl /*<< pm.stats() << std::endl*/;
 
     // TODO Construct groups.
     // std::cout << "Constructing groups..." << std::endl;
