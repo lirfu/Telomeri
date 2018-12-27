@@ -19,8 +19,8 @@ float getSequenceIdentity(const OverlapGraph::PAFOverlap &overlap);
 std::string OverlapGraph::stats() {
     std::stringstream str;
 
-    ulong min_len = static_cast<uint>(-1), max_len = 0;
-    ulong min_con = static_cast<uint>(-1), max_con = 0;
+    ulong min_len = static_cast<ulong>(-1), max_len = 0;
+    ulong min_con = static_cast<ulong>(-1), max_con = 0;
     ulong anchors = 0, reads = 0;
     for (const Node &n:nodes_) {
         n.anchor ? anchors++ : reads++;
