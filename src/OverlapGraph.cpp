@@ -193,25 +193,23 @@ void OverlapGraph::buildFrom(
     }
 
     { // Create edge and emplace it into internal vector.
-        int query_overlap_length = getQueryOverlapLength(overlap);
-        int target_overlap_length = getTargetOverlapLength(overlap);
-        int query_extension_length = getQueryExtensionLength(overlap);
-        float sequence_identity = getSequenceIdentity(overlap);
+        int query_OL = getQueryOverlapLength(overlap);
+        int target_OL = getTargetOverlapLength(overlap);
+        int query_EL = getQueryExtensionLength(overlap);
+        int query_OH = getQueryOverhangLength(overlap);
+        int target_OH = getTargetOverhangLength(overlap);
+        float SI = getSequenceIdentity(overlap);
 
-        float overlap_score = (query_overlap_length + target_overlap_length)
-                              * sequence_identity / 2.0f;
-
-        // Score of query extending target.
-        float extension_score = overlap_score + query_extension_length / 2.0f
-                                - (target_overlap_length + query_overlap_length) / 2.0f;
+        float OS = (query_OL + target_OL) * SI / 2.0f;
+        float ES = OS + query_EL / 2.0f - (query_OH + target_OH) / 2.0f;
 
         edges_.emplace_back(
                 nodes_[qn_index], // First node of the edge.
                 nodes_[tn_index], // Second node of the edge.
-                query_overlap_length,
-                overlap_score,
-                sequence_identity,
-                extension_score);
+                query_OL,
+                OS,
+                SI,
+                ES);
 
         nodes_[qn_index].edges.push_back(edges_[edges_.size() - 1]);
         nodes_[tn_index].edges.push_back(edges_[edges_.size() - 1]);
