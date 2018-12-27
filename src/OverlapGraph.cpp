@@ -94,25 +94,13 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
             buildFrom(o, pos);
         }
 
-        ++i;
-#ifdef DEBUG
-        if (i % 1000 == 0)
-//            std::cout << "-> " << i << " entries loaded " << std::endl;
-//        std::cout << "OG add info: " << nodes_.size() << " " << edges_.size() << " "
-//                  << (ContigPosition::QUERY == pos)
-//                  << (ContigPosition::TARGET == pos)
-//                  << (ContigPosition::NONE == pos) << " " << o.query_name << " " << filepath << std::endl;
-#endif
-
-            // When testing, load only N instances.
-            if (test_load_num_ > 0 && test_load_num_ < i) {
-                break;
-            }
+        // When testing, load only N instances.
+        if (test_load_num_ > 0 && test_load_num_ < ++i) {
+            break;
+        }
     }
 
-#ifdef DEBUG
-    std::cout << "Loaded " << nodes_.size() << '/' << i << " nodes" << std::endl;
-#endif
+    std::cout << "Loaded " << nodes_.size() << '/' << i << " nodes from " << filepath << std::endl;
 
     filestream.close();
     return true;
@@ -123,6 +111,7 @@ bool OverlapGraph::filter(const OverlapGraph::PAFOverlap &overlap) const {
     int target_overlap_length = getTargetOverlapLength(overlap);
     int query_overhang_length = getQueryOverhangLength(overlap);
     int target_overhang_length = getTargetOverhangLength(overlap);
+
     float overlap_length;
     float overhang_length;
     float total_length;
@@ -159,7 +148,6 @@ bool OverlapGraph::filter(const OverlapGraph::PAFOverlap &overlap) const {
 
     return overhang_length <= filter_params_.max_overhang_length
            && (overhang_length / overlap_length) <= filter_params_.max_overhang_percentage;
-
 }
 
 void OverlapGraph::buildFrom(
@@ -201,7 +189,9 @@ void OverlapGraph::buildFrom(
         float SI = getSequenceIdentity(overlap);
 
         float OS = (query_OL + target_OL) * SI / 2.0f;
-        float ES = OS + query_EL / 2.0f - (query_OH + target_OH) / 2.0f;
+
+        // TODO This shouldn't give negative values (filtering problems).
+        float ES = std::abs(OS + query_EL / 2.0f - (query_OH + target_OH) / 2.0f);
 
         edges_.emplace_back(
                 nodes_[qn_index], // First node of the edge.
