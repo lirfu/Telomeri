@@ -205,7 +205,7 @@ void OverlapGraph::buildFrom(
 }
 
 long OverlapGraph::nodeIndex(const std::string &name) const {
-    for (long i = 0; i < nodes_.size(); i++) {
+    for (long i = nodes_.size() - 1; i >= 0; i--) {
         if (nodes_[i].name == name) {
             return i;
         }
