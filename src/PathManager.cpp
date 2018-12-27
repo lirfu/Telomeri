@@ -130,3 +130,12 @@ void PathManager::filterUnique() {
 //    std::cout<<"=========================="<<std::endl;
 //#endif
 }
+
+std::string PathManager::stats() {
+    std::stringstream str;
+
+    str << "Paths" << std::endl;
+    str << "- total: " << paths_.size() << std::endl;
+
+    return str.str();
+}

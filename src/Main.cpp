@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     // Filter uniques.
 //    pm.filterUnique();
 
-    std::cout << "Done (" << timer.lap() << "s)" << std::endl /*<< pm.stats() << std::endl*/;
+    std::cout << "Done (" << timer.lap() << "s)" << std::endl << pm.stats() << std::endl;
 
     // TODO Construct groups.
     // std::cout << "Constructing groups..." << std::endl;

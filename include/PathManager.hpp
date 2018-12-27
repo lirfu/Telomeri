@@ -19,6 +19,7 @@ public:
     void buildMonteCarlo(const OverlapGraph &g, int repeat_num, const Utils::Metrics &metric);
     void buildDeterministic(const OverlapGraph &g, int repeat_num, const Utils::Metrics &metric);
     void filterUnique();
+    std::string stats();
 };
 
 
