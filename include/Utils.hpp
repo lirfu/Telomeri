@@ -20,7 +20,7 @@ namespace Utils {
         if (str.length() < temp.length()) {
             return false;
         }
-        for (int i = 0; i < temp.length(); i++) {
+        for (int i = 0; i < static_cast<int>(temp.length()); i++) {
             if (std::tolower(str[i]) != std::tolower(temp[i])) {
                 return false;
             }
@@ -43,6 +43,8 @@ namespace Utils {
                 return e.extension_score;
             case Utils::Metrics::OVERLAP_SCORE:
                 return e.overlap_score;
+            default:
+                return 0.0f;
         }
     }
 
@@ -59,7 +61,7 @@ namespace Utils {
             std::stringstream str;
             bool e = false;
             int ni = 0;
-            for (int i = 0; i < nodes_.size() + edges_.size(); i++) {
+            for (int i = 0, n = static_cast<int>(nodes_.size() + edges_.size()); i < n; i++) {
                 if (e) {
                     str << "-";
                     e = false;
@@ -101,7 +103,7 @@ namespace Utils {
             return diff.count();
         }
     };
-};
+}
 
 
 #endif //TELOMERI_UTILS_H

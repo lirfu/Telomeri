@@ -59,7 +59,7 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
     // Read line-by-line, check filter and build nodes.
     PAFOverlap o;
     std::string s;
-    int i = 0;
+    unsigned i = 0;
     while (filestream
             >> o.query_name
             >> o.query_len
