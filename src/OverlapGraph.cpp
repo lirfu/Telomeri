@@ -154,30 +154,16 @@ void OverlapGraph::buildFrom(
         const OverlapGraph::PAFOverlap &overlap,
         ContigPosition pos) {
 
-    int qn_index; // Query node index in internal vector. Needed for edge.
-    { // Create query node.
-        Node qn(pos == ContigPosition::QUERY,
-                nodes_.size(),    // Will be added at vector end.
-                overlap.query_len,
-                overlap.query_name);
-        qn_index = nodeIndex(qn); // Fetch node index in internal vector.
-        if (qn_index < 0) {       // Check if node is present in vector.
-            nodes_.push_back(qn); // Add node to end of internal vector.
-            qn_index = qn.index;  // Remember node index.
-        }
+    long qn_index = nodeIndex(overlap.query_name);
+    if (qn_index < 0) { // Node doesn't exist yet, create it.
+        qn_index = nodes_.size();
+        nodes_.emplace_back(pos == ContigPosition::QUERY, qn_index, overlap.query_len, overlap.query_name);
     }
 
-    int tn_index; // Target node index in internal vector. Needed for edge.
-    { // Create target node.
-        Node tn(pos == ContigPosition::TARGET,
-                nodes_.size(),    // Will be added at vector end.
-                overlap.target_len,
-                overlap.target_name);
-        tn_index = nodeIndex(tn); // Fetch node index in internal vector.
-        if (tn_index < 0) {       // Check if node is present in vector.
-            nodes_.push_back(tn); // Add node to end of internal vector.
-            tn_index = tn.index;  // Remember node index.
-        }
+    long tn_index = nodeIndex(overlap.target_name);
+    if (tn_index < 0) { // Node doesn't exist yet, create it.
+        tn_index = nodes_.size();
+        nodes_.emplace_back(pos == ContigPosition::TARGET, tn_index, overlap.target_len, overlap.target_name);
     }
 
     { // Create edge and emplace it into internal vector.
@@ -206,9 +192,9 @@ void OverlapGraph::buildFrom(
     }
 }
 
-int OverlapGraph::nodeIndex(const Node &node) {
-    for (int i = 0, n = static_cast<int>(nodes_.size()); i < n; i++) {
-        if (nodes_[i] == node) {
+long OverlapGraph::nodeIndex(const std::string &name) const {
+    for (long i = nodes_.size() - 1; i >= 0; i--) {
+        if (nodes_[i].name == name) {
             return i;
         }
     }
