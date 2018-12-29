@@ -90,7 +90,7 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
             pos = ContigPosition::NONE;
         }
 
-        if (!filter(o)) {
+        if (true /*filter(o)*/) { // TODO Filter params should be defined.
             buildFrom(o, pos);
         }
 
@@ -107,6 +107,10 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
 }
 
 bool OverlapGraph::filter(const OverlapGraph::PAFOverlap &overlap) const {
+    if (overlap.query_name == overlap.target_name) { // Skip edges to the same starting point.
+        return false;
+    }
+
     int query_overlap_length = getQueryOverlapLength(overlap);
     int target_overlap_length = getTargetOverlapLength(overlap);
     int query_overhang_length = getQueryOverhangLength(overlap);
