@@ -180,8 +180,8 @@ void OverlapGraph::buildFrom(
         float ES = std::abs(OS + query_EL / 2.0f - (query_OH + target_OH) / 2.0f);
 
         edges_.emplace_back(
-                nodes_[qn_index], // First node of the edge.
-                nodes_[tn_index], // Second node of the edge.
+                qn_index, // Index of first node of the edge.
+                tn_index, // Index of second node of the edge.
                 query_OL,
                 OS,
                 SI,
@@ -210,7 +210,7 @@ bool OverlapGraph::Node::operator==(const Node &rhs) const {
     return name == rhs.name;
 }
 
-OverlapGraph::Edge::Edge(const Node &n1, const Node &n2, int overlap_length,
+OverlapGraph::Edge::Edge(int n1, int n2, int overlap_length,
                          float overlap_score, float sequence_identity,
                          float extension_score)
         : n1(n1), n2(n2), overlap_length(overlap_length),

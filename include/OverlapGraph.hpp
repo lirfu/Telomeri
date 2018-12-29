@@ -23,12 +23,12 @@ public:
     };
 
     struct Edge {
-        const Node &n1; /**< First node of the edge. */
-        const Node &n2; /**< Second node of the edge. */
-        int overlap_length;
-        float overlap_score, sequence_identity, extension_score;
+        const int n1; /**< Index of first node of the edge in nodes_. */
+        const int n2; /**< Index of second node of the edge in nodes_. */
+        const int overlap_length;
+        const float overlap_score, sequence_identity, extension_score;
 
-        Edge(const Node &n1, const Node &n2, int overlap_length,
+        Edge(int n1, int n2, int overlap_length,
              float overlap_score, float sequence_identity,
              float extension_score);
     };
