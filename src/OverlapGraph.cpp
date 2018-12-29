@@ -59,7 +59,7 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
     // Read line-by-line, check filter and build nodes.
     PAFOverlap o;
     std::string s;
-    unsigned i = 0;
+    unsigned ctr = 0;
     while (filestream
             >> o.query_name
             >> o.query_len
@@ -79,6 +79,7 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
         filestream >> s;
         filestream >> s;
         filestream >> s;
+        ++ctr;
 
         ContigPosition pos;
         if (anchors) {
@@ -95,12 +96,12 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
         }
 
         // When testing, load only N instances.
-        if (test_load_num_ > 0 && test_load_num_ < ++i) {
+        if (test_load_num_ > 0 && test_load_num_ < ctr) {
             break;
         }
     }
 
-    std::cout << "Loaded " << nodes_.size() << '/' << i << " nodes from " << filepath << std::endl;
+    std::cout << "Loaded " << nodes_.size() << '/' << ctr - 1 << " nodes from " << filepath << std::endl;
 
     filestream.close();
     return true;
