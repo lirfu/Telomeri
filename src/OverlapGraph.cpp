@@ -84,8 +84,8 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
         if (anchors) {
             // Checks the position of the contig by checking name starts with 'ctg'.
             // If none starts with this template, decision defaults to contig-read format.
-            pos = Utils::startsWithInsensitive(o.target_name, "ctg") == 0 ?
-                  ContigPosition::TARGET : ContigPosition::QUERY;
+            pos = Utils::startsWithInsensitive(o.query_name, "ctg") ?
+                  ContigPosition::QUERY : ContigPosition::TARGET;
         } else {
             pos = ContigPosition::NONE;
         }
