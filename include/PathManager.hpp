@@ -17,8 +17,11 @@ private:
     std::vector<Utils::Path> paths_;
 public:
     void buildMonteCarlo(const OverlapGraph &g, int repeat_num, const Utils::Metrics &metric);
-    void buildDeterministic(const OverlapGraph &g, int repeat_num, const Utils::Metrics &metric);
+
+    void buildDeterministic(const OverlapGraph &g, const Utils::Metrics &metric);
+
     void filterUnique();
+
     std::string stats();
 };
 

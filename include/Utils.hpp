@@ -57,6 +57,14 @@ namespace Utils {
                    && std::equal(p1.nodes_.begin(), p1.nodes_.end(), p2.nodes_.begin());
         }
 
+        ulong length() const {
+            ulong l = 0;
+            for (const OverlapGraph::Edge *e:edges_) {
+                l += e->overlap_length; // FIXME Must calculate the extension lengths as well.
+            }
+            return l;
+        }
+
         std::string str() const {
             std::stringstream str;
             bool e = false;

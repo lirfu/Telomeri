@@ -28,12 +28,12 @@ int main(int argc, char **argv) {
     // Construct paths with following heuristics.
     std::cout << "Calculating paths..." << std::endl;
     PathManager pm;
-    pm.buildMonteCarlo(graph, 3, Utils::Metrics::EXTENSION_SCORE);
-    pm.buildDeterministic(graph, 3, Utils::Metrics::EXTENSION_SCORE);
-    pm.buildDeterministic(graph, 3, Utils::Metrics::OVERLAP_SCORE);
+    pm.buildMonteCarlo(graph, 10, Utils::Metrics::EXTENSION_SCORE);
+    pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE);
+    pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE);
 
     // Filter uniques.
-//    pm.filterUnique();
+    pm.filterUnique();
 
     std::cout << "Done (" << timer.lap() << "s)" << std::endl << pm.stats() << std::endl;
 
