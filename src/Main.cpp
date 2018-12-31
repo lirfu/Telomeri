@@ -38,12 +38,12 @@ int main(int argc, char **argv) {
     std::cout << "Done (" << timer.lap() << "s)" << std::endl << pm.stats() << std::endl;
 
     std::cout << "Constructing groups..." << std::endl;
-    std::vector<PathGroup> pgs = pm.constructGroups();
-    for (size_t i = 0, n = pgs.size(); i < n; i++) {
-        std::cout << "PATH GROUP " << i << " [" << pgs[i].getLowerBound() << ','
-            << pgs[i].getUpperBound() << "]: " << pgs[i].str() << '\n'; 
+    std::vector<PathWindow> pws = pm.constructGroups();
+    for (size_t i = 0, n = pws.size(); i < n; i++) {
+        std::cout << "WINDOW " << i << " [" << pws[i].getLowerBound() << ','
+            << pws[i].getUpperBound() << "]: " << pws[i].str() << '\n'; 
     }
-    std::cout << "Created " << pgs.size() << " path groups in " << timer.lap() <<"s!" << std::endl;
+    std::cout << "Created " << pws.size() << " path windows in " << timer.lap() <<"s!" << std::endl;
 
     // TODO Re-group based on current group scores (this may be misinterpreted).
     // SomeOtherFunc f1;

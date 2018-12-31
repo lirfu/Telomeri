@@ -172,8 +172,8 @@ std::tuple<ulong, ulong, ulong> PathManager::getMinMaxSumPathLength() {
     return std::tuple<ulong, ulong, ulong>(min_len, max_len, sum_len);
 }
 
-std::vector<PathGroup> PathManager::constructGroups() {
-    std::vector<PathGroup> path_groups;
+std::vector<PathWindow> PathManager::constructGroups() {
+    std::vector<PathWindow> pws;
 
     // Get min and max path lengths.
     std::tuple<ulong, ulong, ulong> mms = getMinMaxSumPathLength();
@@ -191,19 +191,19 @@ std::vector<PathGroup> PathManager::constructGroups() {
             });
 
     if (max_len - min_len < LEN_THRESHOLD) { // Check if all paths should go in one group.
-        path_groups.emplace_back(min_len, max_len + 1ul, v); // Add one because upper is exclusive.
+        pws.emplace_back(min_len, max_len + 1ul, v); // Add one because upper is exclusive.
     } else {
         for (ulong lower = min_len, upper = lower + WINDOW_SIZE;
                 lower <= max_len;
                 lower = upper, upper += WINDOW_SIZE) {
-            path_groups.emplace_back(lower, upper, v);
+            pws.emplace_back(lower, upper, v);
         }
     }
 
-    return path_groups;
+    return pws;
 }
 
-PathGroup::PathGroup(ulong l, ulong u, const std::vector<const Utils::Path*>& sp)
+PathWindow::PathWindow(ulong l, ulong u, const std::vector<const Utils::Path*>& sp)
         : lower(l), upper(u) {
     for (size_t i = 0, n = sp.size(); i < n; i++) {
         if (sp[i]->length() >= upper) break; // Passed upper limit.

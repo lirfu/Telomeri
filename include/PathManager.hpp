@@ -14,7 +14,7 @@
 
 #define REBUILD_ATTEMPTS 3
 
-class PathGroup;
+class PathWindow;
 
 class PathManager {
 private:
@@ -30,7 +30,7 @@ public:
 
     std::string stats();
 
-    std::vector<PathGroup> constructGroups();
+    std::vector<PathWindow> constructGroups();
 private:
     /** If difference between maximum and minimum path length is greater than
      *  this threshold,, all paths go into same group. */
@@ -40,21 +40,20 @@ private:
 };
 
 
-class PathGroup {
+class PathWindow {
 private:
     ulong lower; //< Lower path length bound (inclusive).
     ulong upper; //< upper path length bound (exclusive).
     std::vector<const Utils::Path*> pig_; //< Pointers to paths in group.
 public:
-    /** Constructs a path group with paths that have paths lengths between lower
-     *  (inclusive) and upper (exclusive) bound.
-     *
+    /** Constructs a path window with paths that have paths lengths between
+     *  lower (inclusive) and upper (exclusive) bound.
      *  @param l  Lower path length bound for this path group (inclusive).
      *  @param u  Upper path length bound for this path group (exclusive).
      *  @param sp Sorted pointers to paths according to path lenght in
      *            ascending order.
      * */
-    PathGroup(ulong l, ulong u, const std::vector<const Utils::Path*>& sp);
+    PathWindow(ulong l, ulong u, const std::vector<const Utils::Path*>& sp);
 
     std::string str() const {
         std::stringstream ss;
