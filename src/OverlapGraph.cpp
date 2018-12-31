@@ -34,16 +34,16 @@ std::string OverlapGraph::stats() {
             max_con = n.edges.size();
     }
 
-    str << "Nodes" << std::endl;
-    str << "-  anchor: " << anchors << std::endl;
-    str << "-    read: " << reads << std::endl;
-    str << "-   total: " << nodes_.size() << std::endl;
-    str << "- min_len: " << min_len << std::endl;
-    str << "- max_len: " << max_len << std::endl;
-    str << "- min_con: " << min_con << std::endl;
-    str << "- max_con: " << max_con << std::endl;
-    str << "Edges" << std::endl;
-    str << "-  total: " << edges_.size() << std::endl;
+    str << "Nodes"                        << '\n'
+        << "-  anchor: " << anchors       << '\n'
+        << "-    read: " << reads         << '\n'
+        << "-   total: " << nodes_.size() << '\n'
+        << "- min_len: " << min_len       << '\n'
+        << "- max_len: " << max_len       << '\n'
+        << "- min_con: " << min_con       << '\n'
+        << "- max_con: " << max_con       << '\n'
+        << "Edges"                        << '\n'
+        << "-   total: " << edges_.size() << std::endl;
 
     return str.str();
 }

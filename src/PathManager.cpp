@@ -143,8 +143,23 @@ void PathManager::filterUnique() {
 std::string PathManager::stats() {
     std::stringstream str;
 
+    std::tuple<ulong, ulong, ulong> mms = getMinMaxSumPathLength();
+    ulong min_len = std::get<0>(mms);
+    ulong max_len = std::get<1>(mms);
+    ulong sum_len = std::get<2>(mms);
+
+    str << "Paths"                                    << '\n'
+        << "- total_num: " << paths_.size()           << '\n'
+        << "-   min_len: " << min_len                 << '\n'
+        << "-   max_len: " << max_len                 << '\n'
+        << "-   avg_len: " << sum_len / paths_.size() << std::endl;
+
+    return str.str();
+}
+
+std::tuple<ulong, ulong, ulong> PathManager::getMinMaxSumPathLength() {
     ulong min_len = ULONG_MAX, max_len = 0, sum_len = 0;
-    for (const Utils::Path &p:paths_) {
+    for (const Utils::Path &p : paths_) {
         ulong l = p.length();
         sum_len += l;
         if (min_len > l) {
@@ -154,12 +169,44 @@ std::string PathManager::stats() {
             max_len = l;
         }
     }
+    return std::tuple<ulong, ulong, ulong>(min_len, max_len, sum_len);
+}
 
-    str << "Paths" << std::endl;
-    str << "- total_num: " << paths_.size() << std::endl;
-    str << "-   min_len: " << min_len << std::endl;
-    str << "-   max_len: " << max_len << std::endl;
-    str << "-   avg_len: " << sum_len / paths_.size() << std::endl;
+std::vector<PathGroup> PathManager::constructGroups() {
+    std::vector<PathGroup> path_groups;
 
-    return str.str();
+    // Get min and max path lengths.
+    std::tuple<ulong, ulong, ulong> mms = getMinMaxSumPathLength();
+    ulong min_len = std::get<0>(mms);
+    ulong max_len = std::get<1>(mms);
+
+    // Create a sorted view (ascending) over paths_ array.
+    std::vector<const Utils::Path*> v(paths_.size(), nullptr);
+    for (size_t i = 0, n = v.size(); i < n; i++) {
+        v[i] = &paths_[i];
+    }
+    std::sort(v.begin(), v.end(),
+            [](const Utils::Path* a, const Utils::Path* b) {
+                return a->length() < b->length();
+            });
+
+    if (max_len - min_len < LEN_THRESHOLD) { // Check if all paths should go in one group.
+        path_groups.emplace_back(min_len, max_len + 1ul, v); // Add one because upper is exclusive.
+    } else {
+        for (ulong lower = min_len, upper = lower + WINDOW_SIZE;
+                lower <= max_len;
+                lower = upper, upper += WINDOW_SIZE) {
+            path_groups.emplace_back(lower, upper, v);
+        }
+    }
+
+    return path_groups;
+}
+
+PathGroup::PathGroup(ulong l, ulong u, const std::vector<const Utils::Path*>& sp)
+        : lower(l), upper(u) {
+    for (size_t i = 0, n = sp.size(); i < n; i++) {
+        if (sp[i]->length() >= upper) break; // Passed upper limit.
+        if (sp[i]->length() >= lower) pig_.emplace_back(sp[i]);
+    }
 }
