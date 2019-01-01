@@ -1,10 +1,5 @@
-//
-// Created by lirfu on 26.12.18..
-//
-
 #ifndef TELOMERI_PATHMANAGER_HPP
 #define TELOMERI_PATHMANAGER_HPP
-
 
 #include <sstream>
 #include "OverlapGraph.hpp"
@@ -14,7 +9,7 @@
 
 #define REBUILD_ATTEMPTS 3
 
-class PathWindow;
+class PathGroup;
 
 class PathManager {
 private:
@@ -30,42 +25,36 @@ public:
 
     std::string stats();
 
-    std::vector<PathWindow> constructGroups();
+    std::vector<PathGroup> constructGroups();
 private:
     /** If difference between maximum and minimum path length is greater than
      *  this threshold,, all paths go into same group. */
     static constexpr ulong LEN_THRESHOLD = 10000ul;
     /** Window size in path length. */
     static constexpr ulong WINDOW_SIZE = 1000ul;
+    /** Valley and peak ratio needed for splitting the paths into groups
+     * according to lowest path length frequency in the valley window. */
+    static constexpr float RATIO_THRESHOLD = 0.9f;
 };
 
 
-class PathWindow {
-private:
-    ulong lower; //< Lower path length bound (inclusive).
-    ulong upper; //< upper path length bound (exclusive).
+class PathGroup {
+public:
     std::vector<const Utils::Path*> pig_; //< Pointers to paths in group.
 public:
-    /** Constructs a path window with paths that have paths lengths between
-     *  lower (inclusive) and upper (exclusive) bound.
-     *  @param l  Lower path length bound for this path group (inclusive).
-     *  @param u  Upper path length bound for this path group (exclusive).
-     *  @param sp Sorted pointers to paths according to path lenght in
-     *            ascending order.
-     * */
-    PathWindow(ulong l, ulong u, const std::vector<const Utils::Path*>& sp);
-
-    std::string str() const {
-        std::stringstream ss;
-        for (const auto pp : pig_) {
-            ss << pp->str() << '[' << pp->length() << ']' << "  ";
+    PathGroup(std::vector<const Utils::Path*>::const_iterator begin,
+        std::vector<const Utils::Path*>::const_iterator end);
+    
+    friend std::ostream& operator<< (std::ostream& s, const PathGroup& pg) {
+        int i = 0;
+        for (const auto pp : pg.pig_) {
+            s << pp->str() << '[' << pp->length() << ']' << ' ';
+            if (++i % 3 == 0) { // Print out new line every now and then.
+                s << '\n'; 
+            }
         }
-        return ss.str();
+        return s;
     }
-
-    ulong getLowerBound() {return lower;}
-    ulong getUpperBound() {return upper;}
 };
 
-
-#endif //TELOMERI_PATHMANAGER_HPP
+#endif

@@ -1,13 +1,10 @@
-//
-// Created by lirfu on 26.12.18..
-//
-
 #include <cmath>
 #include <OverlapGraph.hpp>
 #include <Utils.hpp>
 #include <PathManager.hpp>
 #include <iostream>
 #include <climits>
+#include <map>
 
 void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num, const Utils::Metrics &metric) {
     std::srand(42);
@@ -172,9 +169,70 @@ std::tuple<ulong, ulong, ulong> PathManager::getMinMaxSumPathLength() {
     return std::tuple<ulong, ulong, ulong>(min_len, max_len, sum_len);
 }
 
-std::vector<PathWindow> PathManager::constructGroups() {
-    std::vector<PathWindow> pws;
 
+class PathWindow {
+private:
+    ulong lower; //< Lower path length bound (inclusive).
+    ulong upper; //< upper path length bound (exclusive).
+    std::vector<const Utils::Path*> piw_; //< Pointers to paths in window.
+    std::map<ulong, int> frqs; //< Path length frequencies.
+    int sum_frqs;
+public:
+    /** Constructs a path window with paths that have paths lengths between
+     *  lower (inclusive) and upper (exclusive) bound.
+     *  @param l  Lower path length bound for this path group (inclusive).
+     *  @param u  Upper path length bound for this path group (exclusive).
+     *  @param sp Sorted pointers to paths according to path lenght in
+     *            ascending order.
+     * */
+    PathWindow(ulong l, ulong u, const std::vector<const Utils::Path*>& sp)
+            : lower(l), upper(u), sum_frqs(0) {
+        for (size_t i = 0, n = sp.size(); i < n; i++) {
+            if (sp[i]->length() >= u) break; // Passed upper limit.
+            if (sp[i]->length() >= l) {
+                piw_.emplace_back(sp[i]);
+                
+                // If this is first time seeing this path length, set it to one. Otherwise increment.
+                frqs[sp[i]->length()] = frqs.count(sp[i]->length()) == 0 ?
+                    1 : frqs[sp[i]->length()] + 1;
+
+                // Increase total number of paths in this window (sum frequencies).
+                sum_frqs++;
+            }
+        }
+    }
+
+    friend std::ostream& operator<< (std::ostream& s, const PathWindow& pw) {
+        for (const auto pp : pw.piw_) {
+            s << pp->str() << '[' << pp->length() << ']' << ' ';
+        }
+        return s;
+    }
+
+    /** Returns a <PathLength, Frequency> pair for which has lowest frequency in the frqs map. */
+    std::pair<ulong, int> getLowestFrequencyEntry() const {
+        return *std::min_element(std::begin(frqs), std::end(frqs), // Returns an iterator, hence dereference.
+            [] (const std::pair<ulong, int>& p1, const std::pair<ulong, int> & p2) {
+                return p1.second < p2.second;
+            });
+    }
+
+    /** Returns a <PathLength, Frequency> pair for which has highest frequency in the frqs map. */
+    std::pair<ulong, int> getHighestFrequencyEntry() const {
+        return *std::max_element(std::begin(frqs), std::end(frqs), // Returns an iterator, hence dereference.
+            [] (const std::pair<ulong, int>& p1, const std::pair<ulong, int> & p2) {
+                return p1.second < p2.second;
+            });
+    }
+    
+    ulong getLowerBound() const {return lower;}
+    ulong getUpperBound() const {return upper;}
+    int getSumFreqs() const {return sum_frqs;}
+};
+
+
+std::vector<ulong> getBorderPathLengths(const std::vector<PathWindow>& pws, float ratio_threshold);
+std::vector<PathGroup> PathManager::constructGroups() {
     // Get min and max path lengths.
     std::tuple<ulong, ulong, ulong> mms = getMinMaxSumPathLength();
     ulong min_len = std::get<0>(mms);
@@ -190,23 +248,84 @@ std::vector<PathWindow> PathManager::constructGroups() {
                 return a->length() < b->length();
             });
 
-    if (max_len - min_len < LEN_THRESHOLD) { // Check if all paths should go in one group.
-        pws.emplace_back(min_len, max_len + 1ul, v); // Add one because upper is exclusive.
+    // Create path groups.
+    std::vector<PathGroup> pgs;
+    if (max_len - min_len < LEN_THRESHOLD) {  // Check if all paths should go in one group.
+        pgs.emplace_back(v.begin(), v.end()); // Insert all elements from 'v' into first (and only) group.
     } else {
+        // Create path windows.
+        std::vector<PathWindow> pws;
         for (ulong lower = min_len, upper = lower + WINDOW_SIZE;
                 lower <= max_len;
                 lower = upper, upper += WINDOW_SIZE) {
-            pws.emplace_back(lower, upper, v);
+            pws.emplace_back(lower, upper, v);         // Create a window with paths in the [lower, upper> range.
+            if ((pws.end() - 1)->getSumFreqs() == 0) { // Check if window is empty.
+                pws.pop_back();                        // Remove empty window.
+            }
+        }
+//#ifdef DEBUG
+        //std::cout << "Created " << pws.size() << " non-empty path windows.\n";
+        //for (size_t i = 0, n = pws.size(); i < n; i++) {
+            //std::cout << "  window " << i << " [" << pws[i].getLowerBound() << ','
+                //<< pws[i].getUpperBound() << "]: " << pws[i] << '\n'; 
+        //}
+//#endif
+
+        // Get path lengths that divide all paths into groups.
+        std::vector<ulong> bs = getBorderPathLengths(pws, RATIO_THRESHOLD);
+#ifdef DEBUG
+        std::cout << "Dividing path lengths: ";
+        for_each(bs.begin(), bs.end(), [] (ulong el) {std::cout << el << ' ';});
+        std::cout << std::endl << std::endl;
+#endif
+        if (bs.empty()) { // No dividing path lengths has been found. All paths go into same group.
+            pgs.emplace_back(v.begin(), v.end()); // Insert all elements from 'v' into first (and only) group.
+        } else {
+            std::vector<const Utils::Path*>::const_iterator begin = v.begin(); // Start of the group (inclusve).
+            std::vector<const Utils::Path*>::const_iterator end;               // End of the group (exclusive).
+            for (ulong cur_border : bs) {  // Current border. 
+                for (end = begin; (*end)->length() < cur_border; end++); // Find first outside the border.
+                pgs.emplace_back(begin, end); // Create group: [PreviousBorder, CurrentBorder>.
+                begin = end;                  // Set begining of the next group to current border (current group end).
+            }
+            pgs.emplace_back(begin, v.end()); // Create final group: [LastBorder, v.end>.
         }
     }
-
-    return pws;
+    
+    return pgs;
 }
 
-PathWindow::PathWindow(ulong l, ulong u, const std::vector<const Utils::Path*>& sp)
-        : lower(l), upper(u) {
-    for (size_t i = 0, n = sp.size(); i < n; i++) {
-        if (sp[i]->length() >= upper) break; // Passed upper limit.
-        if (sp[i]->length() >= lower) pig_.emplace_back(sp[i]);
-    }
+std::vector<ulong> getBorderPathLengths(const std::vector<PathWindow>& pws, float ratio_threshold) {
+    std::vector<ulong> dividing_path_lengths; // Path lengths used to divide the set into groups.
+    dividing_path_lengths.reserve(10);        // Reserve some space to prevent some copies.
+
+    for(size_t i = 1, n = pws.size(); i < n - 1; i++) {
+        // Shortcut references to left(l), center/current(c) and right(r) window.
+        const PathWindow &l = pws[i-1], &c = pws[i], &r = pws[i+1];
+
+        // Calculate valley and peak windows. 
+        const PathWindow& valley = std::min({l, c, r},
+                [](const PathWindow& a, const PathWindow& b){
+                    return a.getSumFreqs() < b.getSumFreqs();
+                });
+        const PathWindow& peak = std::max({l, c, r},
+                [](const PathWindow& a, const PathWindow& b){
+                    return a.getSumFreqs() < b.getSumFreqs();
+                });
+
+        // Get <PathLength, Frequency> entries from the valley and peak windows.
+        std::pair<ulong, int> valley_pair = valley.getLowestFrequencyEntry();
+        std::pair<ulong, int> peak_pair = peak.getHighestFrequencyEntry();
+
+        // If lowest frequency in the valley is 'significantly' smaller than highest frequency in the
+        // peak, use the PathLength with the lowest frequency in the valley to divide the set into groups.
+        if (valley_pair.second < ratio_threshold * peak_pair.second) {
+            dividing_path_lengths.push_back(valley_pair.first);             
+        }
+    } 
+    return dividing_path_lengths;
 }
+
+PathGroup::PathGroup(std::vector<const Utils::Path*>::const_iterator begin,
+        std::vector<const Utils::Path*>::const_iterator end)
+    : pig_(begin, end) {}
