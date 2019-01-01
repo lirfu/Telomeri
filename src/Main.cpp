@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
     OverlapGraph graph;
 
     // FIXME Just for testing.
-    graph.test_load_num_ = 00000;
+    graph.test_load_num_ = 100000;
 
     std::cout << "Loading files..." << std::endl;
     if (!graph.load(argv[1], false) || !graph.load(argv[2], true)) {
