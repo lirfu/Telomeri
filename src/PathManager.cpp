@@ -126,8 +126,130 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
 }
 
 void PathManager::buildDeterministic(const OverlapGraph &g,
-        const Utils::Metrics &metric) {
-    // TODO
+                                     const Utils::Metrics &metric) {
+    // For each anchor node as starting point
+    for (const OverlapGraph::Node &start_node : g.nodes_) {
+        // Skip read-nodes.
+        if (!start_node.anchor) {
+            continue;
+        }
+
+        // Construct path for each node connected to start_node
+        for (const OverlapGraph::Edge &first_edge : start_node.edges) {
+            Path path;
+            // Add first node, first edge and second node to the path
+            path.nodes_.push_back(&start_node);
+            path.edges_.push_back(&first_edge);
+            // Get second node from which the path will be build
+            const OverlapGraph::Node *node = &g.nodes_[
+                    (start_node.index == first_edge.n2) ? first_edge.n1 : first_edge.n2
+            ];
+
+
+            // If second node was already an anchor, the path of length 2 is built
+            if (node->anchor) {
+                path.updateLength();
+                paths_.push_back(path);
+                break;
+            }
+
+            // Defines will the path be added (considered).
+            bool all_ok = true;
+            int step_index = 0;
+            // Defines how many of best-scoring nodes will be ignored for path construction.
+            // 0 = use best-scoring node
+            // 1 = use second-best node
+            // ...and so on
+            // This is used to go back a step when dead end is encountered.
+            int skip_n_best = 0;
+
+            // Construct the path
+            while (true) {
+                // Dead end, go back a step and try a different path
+                if (node->edges.empty()) {
+                    if (step_index == 0) {
+                        // Cannot go back a step, drop this path
+                        all_ok = false;
+                        break;
+                    } else {
+                        // Go back a step
+                        step_index -= 1;
+                        skip_n_best += 1;
+                        node = path.nodes_.back();
+                        // TODO can someone who is better in C++ check if this is memory-safe?
+                        path.nodes_.pop_back();
+                        path.edges_.pop_back();
+                        continue;
+                    }
+                }
+
+                // If we need to skip all edges, then this is a dead end, go back a step
+                if (skip_n_best >= node->edges.size() - 1) {
+                    step_index -= 1;
+                    skip_n_best += 1;
+                    node = path.nodes_.back();
+                    // TODO same check here
+                    path.nodes_.pop_back();
+                    path.edges_.pop_back();
+                    continue;
+                }
+
+                // Sort edges by provided metric
+                std::vector sorted_edges(node->edges);
+                std::stable_sort(
+                        sorted_edges.begin(),
+                        sorted_edges.end(),
+                        [](const OverlapGraph::Edge &a, const OverlapGraph::Edge &b) {
+                            return Utils::getMetric(a, metric) > Utils::getMetric(b, metric);
+                        }
+                );
+
+                // Find edge by skipping n best
+                bool edge_found = false;
+                const OverlapGraph::Edge *edge = nullptr;
+                while (skip_n_best < node->edges.size() - 1) {
+                    edge = sorted_edges[skip_n_best];
+
+                    // Edge was not visited yet, break the loop
+                    if (!Utils::contains(path.edges_, edge)) {
+                        edge_found = true;
+                        break;
+                    } else {
+                        skip_n_best += 1;
+                    }
+                }
+
+                // Yet again there are no available edges, go back a step
+                if (!edge_found) {
+                    step_index -= 1;
+                    skip_n_best += 1;
+                    node = path.nodes_.back();
+                    // TODO same check here
+                    path.nodes_.pop_back();
+                    path.edges_.pop_back();
+                    continue;
+                }
+
+                // Finally, the edge was found
+                path.edges_.push_back(edge);
+                // Go to next node
+                node = &g.nodes_[(node->index == edge->n2) ? edge->n1 : edge->n2];
+                path.nodes_.push_back(node);
+
+                // If target node is anchor, add the node and break.
+                if (node->anchor) {
+                    break;
+                }
+
+                step_index += 1;
+            }
+
+            if (all_ok) {
+                path.updateLength();
+                paths_.push_back(path);
+            }
+        }
+    }
 }
 
 void PathManager::filterUnique() {
@@ -195,7 +317,7 @@ std::vector<PathGroup> PathManager::constructGroups() {
     std::vector<PathGroup> pgs;
     if (max_len - min_len < LEN_THRESHOLD) {  // If all paths go in one group.
         // Insert all elements from 'v' into first (and only) group.
-        pgs.emplace_back(v.begin(), v.end()); 
+        pgs.emplace_back(v.begin(), v.end());
     } else {
         // Create path windows.
         std::vector<PathWindow> pws;
@@ -212,7 +334,7 @@ std::vector<PathGroup> PathManager::constructGroups() {
         //std::cout << "Created " << pws.size() << " non-empty path windows.\n";
         //for (size_t i = 0, n = pws.size(); i < n; i++) {
             //std::cout << "  window " << i << " [" << pws[i].getLowerBound()
-            //  << ',' << pws[i].getUpperBound() << "]: " << pws[i] << '\n'; 
+            //  << ',' << pws[i].getUpperBound() << "]: " << pws[i] << '\n';
         //}
 //#endif
 
@@ -225,20 +347,20 @@ std::vector<PathGroup> PathManager::constructGroups() {
 #endif
         if (bs.empty()) { // No dividing path lengths has been found.
             // Insert all elements from 'v' into first (and only) group.
-            pgs.emplace_back(v.begin(), v.end()); 
+            pgs.emplace_back(v.begin(), v.end());
         } else { // Dividing path lengths exist.
             // Start of the group (inclusve) and end of the group (exclusive).
-            std::vector<const Path*>::const_iterator begin = v.begin(); 
+            std::vector<const Path*>::const_iterator begin = v.begin();
             std::vector<const Path*>::const_iterator end;
 
             // Iterate over borders (dividing path lengths).
-            for (ulong cur_border : bs) { 
+            for (ulong cur_border : bs) {
                 // Find first outside the border.
-                for (end = begin; (*end)->length() < cur_border; end++); 
-                
+                for (end = begin; (*end)->length() < cur_border; end++);
+
                 // Create group: [PreviousBorder, CurrentBorder>.
-                pgs.emplace_back(begin, end); 
-                
+                pgs.emplace_back(begin, end);
+
                 // Set begining of next group to current group end.
                 begin = end;
             }
@@ -246,14 +368,14 @@ std::vector<PathGroup> PathManager::constructGroups() {
             pgs.emplace_back(begin, v.end());
         }
     }
-    
+
     return pgs;
 }
 
 std::vector<ulong> getBorderPathLengths(const std::vector<PathWindow>& pws,
         float ratio_threshold) {
     // Path lengths used to divide the set into groups.
-    std::vector<ulong> dividing_path_lengths; 
+    std::vector<ulong> dividing_path_lengths;
     dividing_path_lengths.reserve(10); // Reserve space to prevent some copies.
 
     for(size_t i = 1, n = pws.size(); i < n - 1; i++) {
@@ -279,9 +401,9 @@ std::vector<ulong> getBorderPathLengths(const std::vector<PathWindow>& pws,
         // frequency in the valley to divide the set into groups (dividing path
         // length has been found).
         if (valley_pair.second < ratio_threshold * peak_pair.second) {
-            dividing_path_lengths.push_back(valley_pair.first);             
+            dividing_path_lengths.push_back(valley_pair.first);
         }
-    } 
+    }
     return dividing_path_lengths;
 }
 
