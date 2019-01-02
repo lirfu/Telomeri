@@ -1,7 +1,7 @@
 #include <iostream>
-#include <OverlapGraph.hpp>
-#include <Utils.hpp>
+
 #include <PathManager.hpp>
+#include <Stopwatch.hpp>
 
 int main(int argc, char **argv) {
     if (argc != 3) {
@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    Utils::Stopwatch timer;
+    Stopwatch timer;
     timer.start();
 
     // Construct overlap graph from both files.

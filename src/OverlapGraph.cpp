@@ -1,5 +1,9 @@
+#include <OverlapGraph.hpp>
+
 #include <iostream>
 #include <fstream>
+
+
 #include <Utils.hpp>
 
 int getQueryOverlapLength(const OverlapGraph::PAFOverlap &overlap);
