@@ -194,7 +194,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                     continue;
                 }
 
-                // Sort edges by provided metric
+                // Sort (descending) edges by provided metric
                 std::vector<OverlapGraph::Edge> sorted_edges(node->edges);
                 std::stable_sort(
                         sorted_edges.begin(),
