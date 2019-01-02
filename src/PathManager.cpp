@@ -195,11 +195,11 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 }
 
                 // Sort edges by provided metric
-                std::vector sorted_edges(node->edges);
+                std::vector<OverlapGraph::Edge> sorted_edges(node->edges);
                 std::stable_sort(
                         sorted_edges.begin(),
                         sorted_edges.end(),
-                        [](const OverlapGraph::Edge &a, const OverlapGraph::Edge &b) {
+                        [metric](const OverlapGraph::Edge& a, const OverlapGraph::Edge& b) -> bool {
                             return Utils::getMetric(a, metric) > Utils::getMetric(b, metric);
                         }
                 );
@@ -208,7 +208,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 bool edge_found = false;
                 const OverlapGraph::Edge *edge = nullptr;
                 while (skip_n_best < node->edges.size() - 1) {
-                    edge = sorted_edges[skip_n_best];
+                    edge = &sorted_edges[skip_n_best];
 
                     // Edge was not visited yet, break the loop
                     if (!Utils::contains(path.edges_, edge)) {
