@@ -62,6 +62,6 @@ int main(int argc, char **argv) {
     // std::cout << "Writing result to: " << output_file << std::endl;
     // Utils::write(scaffold, output_file);
 
-    std::cout << "Done!" << std::endl;
+    std::cout << "Total time: " << timer.stop() << "s" << std::endl;
     return 0;
 }

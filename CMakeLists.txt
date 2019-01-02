@@ -5,8 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(SOURCE_FILES src/Main.cpp
         src/OverlapGraph.cpp
-        src/DeterministicHeuristic.cpp
-        src/PathManager.cpp)
+        src/PathManager.cpp
+        src/Path.cpp
+        src/PathGroup.cpp
+        src/PathWindow.cpp
+        src/Stopwatch.cpp)
 
 # Enables the debug printouts.
 #add_definitions(-DDEBUG)
