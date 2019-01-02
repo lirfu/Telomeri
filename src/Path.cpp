@@ -2,23 +2,24 @@
 
 #include <ostream>
 
-ulong Path::length() const { 
-    // FIXME Store this value in a member when path has been constructed since
-    // it is accessed multiple times.
-    ulong l = 0;
+void Path::updateLength() {
+    length_ = 0;
     for (const OverlapGraph::Edge *e:edges_) {
-        l += e->overlap_length; 
+        length_ += e->overlap_length;
         // FIXME Must calculate the extension lengths as well.
     }
-    return l;
 }
 
-std::ostream& operator<< (std::ostream& s, const Path& p) {
+ulong Path::length() const {
+    return length_;
+}
+
+std::ostream &operator<<(std::ostream &s, const Path &p) {
     bool e = false;
     int ni = 0;
     for (int i = 0, n = static_cast<int>(p.nodes_.size() + p.edges_.size());
-            i < n;
-            i++) {
+         i < n;
+         i++) {
         if (e) {
             s << "-";
             e = false;
@@ -34,7 +35,7 @@ std::ostream& operator<< (std::ostream& s, const Path& p) {
     return s;
 }
 
-bool Path::operator==(const Path& other) const {
+bool Path::operator==(const Path &other) const {
     return nodes_.size() == other.nodes_.size()
-            && std::equal(nodes_.begin(), nodes_.end(), other.nodes_.begin());
+           && std::equal(nodes_.begin(), nodes_.end(), other.nodes_.begin());
 }

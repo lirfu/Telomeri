@@ -1,9 +1,7 @@
 #include <PathManager.hpp>
 
 #include <iostream>
-#include <climits>
 
-#include <OverlapGraph.hpp>
 #include <PathWindow.hpp>
 
 void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
@@ -116,6 +114,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
 
             if (all_ok) {
                 rebuilds = 0;
+                p.updateLength();
                 paths_.push_back(p);
 #ifdef DEBUG
                 std::cout << "Added path #" << paths_.size() << ": " << p
