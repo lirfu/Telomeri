@@ -1,13 +1,14 @@
 #include <Path.hpp>
 
 #include <ostream>
+#include <iostream>
 
 void Path::updateLength() {
-    length_ = 0;
-    for (const OverlapGraph::Edge *e:edges_) {
-        length_ += e->overlap_length;
-        // FIXME Must calculate the extension lengths as well.
+    length_ = edges_[0]->t_end - 0; // First anchor.
+    for (uint i = 1; i < edges_.size(); i++) {
+        length_ += edges_[i]->t_end - edges_[i - 1]->q_end;
     }
+    length_ += nodes_.back()->length - edges_.back()->q_end; // Last anchor.
 }
 
 ulong Path::length() const {

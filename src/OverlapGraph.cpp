@@ -38,16 +38,16 @@ std::string OverlapGraph::stats() {
             max_con = n.edges.size();
     }
 
-    str << "Nodes"                        << '\n'
-        << "-  anchor: " << anchors       << '\n'
-        << "-    read: " << reads         << '\n'
-        << "-   total: " << nodes_.size() << '\n'
-        << "- min_len: " << min_len       << '\n'
-        << "- max_len: " << max_len       << '\n'
-        << "- min_con: " << min_con       << '\n'
-        << "- max_con: " << max_con       << '\n'
-        << "Edges"                        << '\n'
-        << "-   total: " << edges_.size() << std::endl;
+    str << "Nodes"                          << std::endl
+        << "-  anchor: " << anchors         << std::endl
+        << "-    read: " << reads           << std::endl
+        << "-   total: " << nodes_.size()   << std::endl
+        << "- min_len: " << min_len         << std::endl
+        << "- max_len: " << max_len         << std::endl
+        << "- min_con: " << min_con         << std::endl
+        << "- max_con: " << max_con         << std::endl
+        << "Edges"                          << std::endl
+        << "-   total: " << edges_.size()   << std::endl;
 
     return str.str();
 }
@@ -95,7 +95,7 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
             pos = ContigPosition::NONE;
         }
 
-        if (true /*filter(o)*/) { // TODO Filter params should be defined.
+        if (true /*filter(o)*/) { // FIXME Filter params should be defined before this can be used.
             buildFrom(o, pos);
         }
 
@@ -191,10 +191,11 @@ void OverlapGraph::buildFrom(
         edges_.emplace_back(
                 qn_index, // Index of first node of the edge.
                 tn_index, // Index of second node of the edge.
-                query_OL,
-                OS,
-                SI,
-                ES);
+                overlap.query_start,
+                overlap.query_end,
+                overlap.target_start,
+                overlap.target_end,
+                OS, SI, ES);
 
         nodes_[qn_index].edges.push_back(edges_[edges_.size() - 1]);
         nodes_[tn_index].edges.push_back(edges_[edges_.size() - 1]);
@@ -210,8 +211,7 @@ long OverlapGraph::nodeIndex(const std::string &name) const {
     return -1;
 }
 
-OverlapGraph::Node::Node(bool anchor, uint index, uint length,
-                         const std::string &name)
+OverlapGraph::Node::Node(bool anchor, uint index, uint length, const std::string &name)
         : anchor(anchor), index(index), length(length), name(name) {}
 
 
@@ -219,10 +219,9 @@ bool OverlapGraph::Node::operator==(const Node &rhs) const {
     return name == rhs.name;
 }
 
-OverlapGraph::Edge::Edge(int n1, int n2, int overlap_length,
-                         float overlap_score, float sequence_identity,
-                         float extension_score)
-        : n1(n1), n2(n2), overlap_length(overlap_length),
+OverlapGraph::Edge::Edge(uint q_index, uint t_index, uint q_start, uint q_end1, uint t_start, uint t_end,
+                         float overlap_score, float sequence_identity, float extension_score)
+        : q_index(q_index), t_index(t_index), q_start(q_start), q_end(q_end1), t_start(t_start), t_end(t_end),
           overlap_score(overlap_score), sequence_identity(sequence_identity),
           extension_score(extension_score) {}
 
