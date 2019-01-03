@@ -99,7 +99,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
                 p.edges_.push_back(edge);
 
                 // Replace current node with target node and add it to nodes.
-                n = &g.nodes_[(n->index == edge->n2) ? edge->n1 : edge->n2];
+                n = &g.nodes_[(n->index == edge->t_index) ? edge->q_index : edge->t_index];
                 p.nodes_.push_back(n);
 
                 // If target node is anchor, add the node and break.
@@ -142,7 +142,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
             path.edges_.push_back(&first_edge);
             // Get second node from which the path will be build
             const OverlapGraph::Node *node = &g.nodes_[
-                    (start_node.index == first_edge.n2) ? first_edge.n1 : first_edge.n2
+                    (start_node.index == first_edge.t_index) ? first_edge.q_index : first_edge.t_index
             ];
 
 
@@ -233,7 +233,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 // Finally, the edge was found
                 path.edges_.push_back(edge);
                 // Go to next node
-                node = &g.nodes_[(node->index == edge->n2) ? edge->n1 : edge->n2];
+                node = &g.nodes_[(node->index == edge->t_index) ? edge->q_index : edge->t_index];
                 path.nodes_.push_back(node);
 
                 // If target node is anchor, add the node and break.
