@@ -23,14 +23,18 @@ public:
     };
 
     struct Edge {
-        const uint q_index; /**< Index of first node of the edge in nodes_. */
-        const uint t_index; /**< Index of second node of the edge in nodes_. */
-        const uint q_start, q_end, t_start, t_end;
-        const float overlap_score, sequence_identity, extension_score;
+        uint q_index; /**< Index of first node of the edge in nodes_. */
+        uint t_index; /**< Index of second node of the edge in nodes_. */
+        uint q_start, q_end, t_start, t_end;
+        float overlap_score, sequence_identity, extension_score;
 
-        Edge(uint q_index, uint t_index, uint q_start, uint q_end1, uint t_start, uint t_end,
+        Edge(uint q_index, uint t_index, uint q_start, uint q_end, uint t_start, uint t_end,
              float overlap_score, float sequence_identity,
              float extension_score);
+
+        constexpr Edge(const Edge &);
+
+        Edge &operator=(Edge &&) noexcept;
     };
 
     struct PAFOverlap {

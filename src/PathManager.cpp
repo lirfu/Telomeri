@@ -199,7 +199,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 std::stable_sort(
                         sorted_edges.begin(),
                         sorted_edges.end(),
-                        [metric](const OverlapGraph::Edge& a, const OverlapGraph::Edge& b) -> bool {
+                        [&](const OverlapGraph::Edge& a, const OverlapGraph::Edge& b) -> bool {
                             return Utils::getMetric(a, metric) > Utils::getMetric(b, metric);
                         }
                 );

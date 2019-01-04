@@ -219,11 +219,32 @@ bool OverlapGraph::Node::operator==(const Node &rhs) const {
     return name == rhs.name;
 }
 
-OverlapGraph::Edge::Edge(uint q_index, uint t_index, uint q_start, uint q_end1, uint t_start, uint t_end,
+OverlapGraph::Edge::Edge(uint q_index, uint t_index, uint q_start, uint q_end, uint t_start, uint t_end,
                          float overlap_score, float sequence_identity, float extension_score)
-        : q_index(q_index), t_index(t_index), q_start(q_start), q_end(q_end1), t_start(t_start), t_end(t_end),
+        : q_index(q_index), t_index(t_index), q_start(q_start), q_end(q_end), t_start(t_start), t_end(t_end),
           overlap_score(overlap_score), sequence_identity(sequence_identity),
           extension_score(extension_score) {}
+
+constexpr OverlapGraph::Edge::Edge(const OverlapGraph::Edge &e)
+        : q_index(e.q_index), t_index(e.t_index),
+          q_start(e.q_start), q_end(e.q_end),
+          t_start(e.t_start), t_end(e.t_end),
+          overlap_score(e.overlap_score),
+          sequence_identity(e.sequence_identity),
+          extension_score(e.extension_score) {}
+
+OverlapGraph::Edge &OverlapGraph::Edge::operator=(OverlapGraph::Edge &&e) noexcept {
+    std::swap(q_index, e.q_index);
+    std::swap(t_index, e.t_index);
+    std::swap(q_start, e.q_start);
+    std::swap(q_end, e.q_end);
+    std::swap(t_start, e.t_start);
+    std::swap(t_end, e.t_end);
+    std::swap(overlap_score, e.overlap_score);
+    std::swap(sequence_identity, e.sequence_identity);
+    std::swap(extension_score, e.extension_score);
+    return *this;
+}
 
 int getQueryOverlapLength(const OverlapGraph::PAFOverlap &overlap) {
     return overlap.query_end - overlap.query_start;
