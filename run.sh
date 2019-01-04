@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 
 # Dataset structure
-# <dir>
-#   L  dataset1
-#           L  reads.fasta
-#           L  contigs.fasta
-#           L  rr_overlaps.paf
-#           L  cr_overlaps.paf
-#   L  dataset2
-#           L  ...
+#   <dataset-dir>
+#          L  reads.fasta
+#          L  contigs.fasta
+#          L  rr_overlaps.paf
+#          L  cr_overlaps.paf
 
 if [ $# -ne 1 ]
 then
-    echo "Please provide the data directory path!"
-    echo "Usage: ./run.sh <dir-path>"
+    echo "Please provide the dataset directory path!"
+    echo "Usage: ./run.sh <dataset-dir>"
+    echo "Dataset structure must match the following"
+    echo "<dataset-dir>"
+    echo "       L  reads.fasta"
+    echo "       L  contigs.fasta"
+    echo "       L  rr_overlaps.paf"
+    echo "       L  cr_overlaps.paf"
     exit 1
 fi
 
