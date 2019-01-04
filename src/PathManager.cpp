@@ -176,8 +176,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                         step_index -= 1;
                         skip_n_best += 1;
                         node = path.nodes_.back();
-                        // TODO can someone who is better in C++ check if this is memory-safe?
-                        path.nodes_.pop_back();
+                        path.nodes_.erase(path.nodes_.end());
                         path.edges_.pop_back();
                         continue;
                     }
@@ -188,8 +187,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                     step_index -= 1;
                     skip_n_best += 1;
                     node = path.nodes_.back();
-                    // TODO same check here
-                    path.nodes_.pop_back();
+                    path.nodes_.erase(path.nodes_.end());
                     path.edges_.pop_back();
                     continue;
                 }
@@ -224,8 +222,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                     step_index -= 1;
                     skip_n_best += 1;
                     node = path.nodes_.back();
-                    // TODO same check here
-                    path.nodes_.pop_back();
+                    path.nodes_.erase(path.nodes_.end());
                     path.edges_.pop_back();
                     continue;
                 }
