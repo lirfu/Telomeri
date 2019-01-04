@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <PathWindow.hpp>
+#include <bitset>
 
 void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
                                   const Utils::Metrics &metric) {
@@ -141,9 +142,15 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
         if (!start_node.anchor) {
             continue;
         }
-
+#define DEBUG 1
+#ifdef DEBUG
+        int n = 0;
+#endif
         // Construct path for each node connected to start_node
         for (const OverlapGraph::Edge &first_edge : start_node.edges) {
+#ifdef DEBUG
+            std::cout << "build " << n++ << "/" << start_node.edges.size() << std::endl;
+#endif
             Path path;
             // Add first node, first edge and second node to the path
             path.nodes_.push_back(&start_node);
@@ -157,6 +164,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
             // If second node was already an anchor, the path of length 2 is built
             if (node->anchor) {
                 path.updateLength();
+                path.nodes_.push_back(node);
                 paths_.push_back(path);
                 break;
             }
@@ -184,7 +192,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                         step_index -= 1;
                         skip_n_best += 1;
                         node = path.nodes_.back();
-                        path.nodes_.erase(path.nodes_.end());
+                        path.nodes_.pop_back();
                         path.edges_.pop_back();
                         continue;
                     }
@@ -192,10 +200,15 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
 
                 // If we need to skip all edges, then this is a dead end, go back a step
                 if (skip_n_best >= node->edges.size() - 1) {
+                    if (step_index == 0) {
+                        // Cannot go back a step, drop this path
+                        all_ok = false;
+                        break;
+                    }
                     step_index -= 1;
                     skip_n_best += 1;
                     node = path.nodes_.back();
-                    path.nodes_.erase(path.nodes_.end());
+                    path.nodes_.pop_back();
                     path.edges_.pop_back();
                     continue;
                 }
@@ -227,10 +240,15 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
 
                 // Yet again there are no available edges, go back a step
                 if (!edge_found) {
+                    if (step_index == 0) {
+                        // Cannot go back a step, drop this path
+                        all_ok = false;
+                        break;
+                    }
                     step_index -= 1;
                     skip_n_best += 1;
                     node = path.nodes_.back();
-                    path.nodes_.erase(path.nodes_.end());
+                    path.nodes_.pop_back();
                     path.edges_.pop_back();
                     continue;
                 }
