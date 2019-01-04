@@ -5,7 +5,7 @@
 #include <PathWindow.hpp>
 
 void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
-        const Utils::Metrics &metric) {
+                                  const Utils::Metrics &metric) {
     std::srand(42);
 
     // For each anchor-node as starting point.
@@ -20,43 +20,35 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
         // After N attempts, path is just dropped.
         int rebuilds = 0;
 
+        std::cout << "---> Building from node n" << start_node.index << std::endl;
+
         // Repeat path building from this starting point.
         for (int i = 0; i < repeat_num; i++) {
             Path p;
             const OverlapGraph::Node *n = &start_node;
 
+            std::cout << "...... Run " << (i + 1) << "   rebuild " << rebuilds << std::endl;
+
             // Store the starting node.
             p.nodes_.push_back(n);
 
             // Defines will the path be added (considered).
-            bool all_ok = true;
+            bool acceptable = false;
 
             // Construct the path.
             while (true) {
                 // Dead end.
                 if (n->edges.size() == 0) {
                     if (n->anchor) {
-                        // This is just a lonely anchor, drop it as it doesn't
-                        // represent a path.
+                        // This is just a lonely anchor, drop it as it doesn't represent a path.
 #ifdef DEBUG
                         std::cout << "Dead anchor: " << p << std::endl;
 #endif
-                        all_ok = false;
                         break;
                     } else {
 #ifdef DEBUG
                         std::cout << "Dead read: " << p << std::endl;
 #endif
-                        if (rebuilds < REBUILD_ATTEMPTS) {
-                            // Retry path building.
-#ifdef DEBUG
-                            std::cout << "Retry building." << std::endl;
-#endif
-                            ++rebuilds;
-                            --i;
-                        }
-                        // Drop the path.
-                        all_ok = false;
                         break;
                     }
                 }
@@ -64,7 +56,8 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
                 // Sum-up the metric values.
                 double sum = 0;
                 for (const OverlapGraph::Edge &e : n->edges) {
-                    if (!Utils::contains(p.edges_, &e)) { // Skip visited edges.
+                    // Skip edges in wrong direction and visited edges.
+                    if (e.t_index == n->index && !Utils::contains(p.edges_, &e)) {
                         sum += getMetric(e, metric);
                     }
                 }
@@ -72,9 +65,8 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
                 // Dead-end detected, drop the path.
                 if (sum == 0) {
 #ifdef DEBUG
-                    std::cout << "Metrics sum to 0: " << p << std::endl;
+                    std::cout << "Metrics sum to 0 (no appropriate edges): " << p << std::endl;
 #endif
-                    all_ok = false;
                     break;
                 }
 
@@ -85,9 +77,9 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
                 const OverlapGraph::Edge *edge = nullptr;
                 sum = 0;
                 for (const OverlapGraph::Edge &e : n->edges) {
-                    if (!Utils::contains(p.edges_, &e)) { // Skip visited edges.
+                    // Skip edges in wrong direction and visited edges.
+                    if (e.t_index == n->index && !Utils::contains(p.edges_, &e)) {
                         sum += getMetric(e, metric);
-
                         if (sum >= random) { // Node found.
                             edge = &e;
                             break;
@@ -95,30 +87,46 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
                     }
                 }
 
-                // Add the selected edge.
-                p.edges_.push_back(edge);
+                // Replace current node with next node.
+                n = &g.nodes_[edge->q_index];
 
-                // Replace current node with target node and add it to nodes.
-                n = &g.nodes_[(n->index == edge->t_index) ? edge->q_index : edge->t_index];
+                // Add the selected edge and next node to path.
                 p.nodes_.push_back(n);
+                p.edges_.push_back(edge);
 
                 // If target node is anchor, add the node and break.
                 if (n->anchor) {
 #ifdef DEBUG
-                    std::cout << "New anchor found, path finished: " << p
-                        << std::endl;
+                    std::cout << "New anchor found, path finished: " << p << std::endl;
 #endif
+                    acceptable = true; // Accept path.
                     break;
                 }
             }
 
-            if (all_ok) {
+            p.updateLength();
+            std::cout << p.length() << "  " << p << std::endl;
+
+            // Path ready to be added.
+            if (acceptable) {
                 rebuilds = 0;
                 p.updateLength();
                 paths_.push_back(p);
+//#ifdef DEBUG
+                std::cout << "Added path #" << paths_.size() << ": " << p << std::endl;
+//#endif
+            } else if (rebuilds < REBUILD_ATTEMPTS) {
+                // Retry path building.
 #ifdef DEBUG
-                std::cout << "Added path #" << paths_.size() << ": " << p
-                    << std::endl;
+                std::cout << "Attempt re-build." << std::endl;
+#endif
+                ++rebuilds;
+                --i;
+            } else {
+                //Stop retrying.
+                rebuilds = 0;
+#ifdef DEBUG
+                std::cout << "Retry attempts wasted." << std::endl;
 #endif
             }
         }
@@ -265,11 +273,11 @@ std::string PathManager::stats() {
     ulong max_len = std::get<1>(mms);
     ulong sum_len = std::get<2>(mms);
 
-    str << "Paths"                                    << '\n'
-        << "- total_num: " << paths_.size()           << '\n'
-        << "-   min_len: " << min_len                 << '\n'
-        << "-   max_len: " << max_len                 << '\n'
-        << "-   avg_len: " << sum_len / paths_.size() << std::endl;
+    str << "Paths"                          << std::endl
+        << "- total_num: " << paths_.size() << std::endl
+        << "-   min_len: " << min_len       << std::endl
+        << "-   max_len: " << max_len       << std::endl
+        << "-   avg_len: " << (paths_.size() > 0 ? sum_len / paths_.size() : 0) << std::endl;
 
     return str.str();
 }

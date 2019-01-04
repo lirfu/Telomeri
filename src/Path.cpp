@@ -1,7 +1,6 @@
 #include <Path.hpp>
 
 #include <ostream>
-#include <iostream>
 
 void Path::updateLength() {
     length_ = edges_[0]->t_end - 0; // First anchor.
