@@ -95,7 +95,7 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
             pos = ContigPosition::NONE;
         }
 
-        if (true /*filter(o)*/) { // FIXME Filter params should be defined before this can be used.
+        if (filter(o)) {
             buildFrom(o, pos);
         }
 
