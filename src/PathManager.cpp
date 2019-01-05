@@ -136,23 +136,39 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
 
 void PathManager::buildDeterministic(const OverlapGraph &g,
                                      const Utils::Metrics &metric) {
+    const size_t num_nodes = g.nodes_.size();
+#ifdef DEBUG
+    int outer = 0;
+    int num_anchors = 0;
+    for (const OverlapGraph::Node &start_node : g.nodes_) {
+        if (start_node.anchor) {
+            num_anchors += 1;
+        }
+    }
+#endif
     // For each anchor node as starting point
     for (const OverlapGraph::Node &start_node : g.nodes_) {
         // Skip read-nodes.
         if (!start_node.anchor) {
             continue;
         }
-#define DEBUG 1
 #ifdef DEBUG
-        int n = 0;
+        outer += 1;
+        int inner = 1;
 #endif
         // Construct path for each node connected to start_node
         for (const OverlapGraph::Edge &first_edge : start_node.edges) {
 #ifdef DEBUG
-            std::cout << "build " << n++ << "/" << start_node.edges.size() << std::endl;
+            std::cout << "Build [" << outer << " / " << num_anchors << "]-["
+                      << inner << " / " << start_node.edges.size() << "]" << std::endl;
+            inner += 1;
 #endif
             Path path;
+            // num_nodes of bools with initial value false
+            std::vector<bool> visited_nodes(num_nodes, false);
+
             // Add first node, first edge and second node to the path
+            visited_nodes[start_node.index] = true;
             path.nodes_.push_back(&start_node);
             path.edges_.push_back(&first_edge);
             // Get second node from which the path will be build
@@ -192,6 +208,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                         step_index -= 1;
                         skip_n_best += 1;
                         node = path.nodes_.back();
+                        visited_nodes[node->index] = false;
                         path.nodes_.pop_back();
                         path.edges_.pop_back();
                         continue;
@@ -208,6 +225,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                     step_index -= 1;
                     skip_n_best += 1;
                     node = path.nodes_.back();
+                    visited_nodes[node->index] = false;
                     path.nodes_.pop_back();
                     path.edges_.pop_back();
                     continue;
@@ -228,9 +246,13 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 const OverlapGraph::Edge *edge = nullptr;
                 while (skip_n_best < node->edges.size() - 1) {
                     edge = &sorted_edges[skip_n_best];
+                    // Get next node
+                    const OverlapGraph::Node* nn = &g.nodes_[
+                            (node->index == edge->t_index) ? edge->q_index : edge->t_index
+                    ];
 
-                    // Edge was not visited yet, break the loop
-                    if (!Utils::contains(path.edges_, edge)) {
+                    // Node was not visited yet, break the loop
+                    if (!visited_nodes[nn->index]) {
                         edge_found = true;
                         break;
                     } else {
@@ -248,15 +270,17 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                     step_index -= 1;
                     skip_n_best += 1;
                     node = path.nodes_.back();
+                    visited_nodes[node->index] = false;
                     path.nodes_.pop_back();
                     path.edges_.pop_back();
                     continue;
                 }
 
                 // Finally, the edge was found
-                path.edges_.push_back(edge);
                 // Go to next node
                 node = &g.nodes_[(node->index == edge->t_index) ? edge->q_index : edge->t_index];
+                visited_nodes[node->index] = true;
+                path.edges_.push_back(edge);
                 path.nodes_.push_back(node);
 
                 // If target node is anchor, add the node and break.
