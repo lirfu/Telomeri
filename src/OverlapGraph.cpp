@@ -4,6 +4,8 @@
 #include <fstream>
 
 #include <Utils.hpp>
+#include <cfloat>
+#include <climits>
 
 int getQueryOverlapLength(const OverlapGraph::PAFOverlap &overlap);
 
@@ -37,6 +39,38 @@ std::string OverlapGraph::stats() {
             max_con = n.edges.size();
     }
 
+    ulong min_OL = ULONG_MAX, max_OL = 0;
+    float min_OS = FLT_MAX, max_OS = 0;
+    float min_ES = FLT_MAX, max_ES = 0;
+    float min_SI = FLT_MAX, max_SI = 0;
+    for (const Edge &e:edges_) {
+        if (min_OS > e.overlap_score) {
+            min_OS = e.overlap_score;
+        }
+        if (max_OS < e.overlap_score) {
+            max_OS = e.overlap_score;
+        }
+        if (min_ES > e.extension_score) {
+            min_ES = e.extension_score;
+        }
+        if (max_ES < e.extension_score) {
+            max_ES = e.extension_score;
+        }
+        if (min_SI > e.sequence_identity) {
+            min_SI = e.sequence_identity;
+        }
+        if (max_SI < e.sequence_identity) {
+            max_SI = e.sequence_identity;
+        }
+        int ol = std::max(e.q_end - e.q_start, e.t_end - e.t_start);
+        if (min_OL > ol) {
+            min_OL = static_cast<ulong>(ol);
+        }
+        if (max_OL < ol) {
+            max_OL = static_cast<ulong>(ol);
+        }
+    }
+
     str << "Nodes" << '\n'
         << "-  anchor: " << anchors << '\n'
         << "-    read: " << reads << '\n'
@@ -46,7 +80,16 @@ std::string OverlapGraph::stats() {
         << "- min_con: " << min_con << '\n'
         << "- max_con: " << max_con << '\n'
         << "Edges" << '\n'
-        << "-   total: " << edges_.size() << std::endl;
+        << "-   total: " << edges_.size() << '\n'
+        << "-  min_OL: " << min_OL << '\n'
+        << "-  max_OL: " << max_OL << '\n'
+        << "-  min_OS: " << min_OS << '\n'
+        << "-  max_OS: " << max_OS << '\n'
+        << "-  min_ES: " << min_ES << '\n'
+        << "-  max_ES: " << max_ES << '\n'
+        << "-  min_SI: " << min_SI << '\n'
+        << "-  max_SI: " << max_SI << '\n'
+        << std::endl;
 
     return str.str();
 }
@@ -62,7 +105,7 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
     // Read line-by-line, check filter and build nodes.
     PAFOverlap o;
     std::string s;
-    unsigned ctr = 0;
+    ulong ctr = 0;
     while (filestream
             >> o.query_name
             >> o.query_len
@@ -104,7 +147,7 @@ bool OverlapGraph::load(char *filepath, bool anchors) {
         }
     }
 
-    std::cout << "Loaded " << nodes_.size() << '/' << ctr - 1 << " nodes from " << filepath << std::endl;
+    std::cout << "Loaded " << edges_.size() << '/' << ctr << " edges from " << filepath << std::endl;
 
     filestream.close();
     return true;
@@ -174,31 +217,30 @@ void OverlapGraph::buildFrom(
         nodes_.emplace_back(pos == ContigPosition::TARGET, tn_index, overlap.target_len, overlap.target_name);
     }
 
-    { // Create edge and emplace it into internal vector.
-        int query_OL = getQueryOverlapLength(overlap);
-        int target_OL = getTargetOverlapLength(overlap);
-        int query_EL = getQueryExtensionLength(overlap);
-        int query_OH = getQueryOverhangLength(overlap);
-        int target_OH = getTargetOverhangLength(overlap);
+    // Create edge and emplace it into internal vector.
+    int query_OL = getQueryOverlapLength(overlap);
+    int target_OL = getTargetOverlapLength(overlap);
+    int query_EL = getQueryExtensionLength(overlap);
+    int query_OH = getQueryOverhangLength(overlap);
+    int target_OH = getTargetOverhangLength(overlap);
 
-        float SI = getSequenceIdentity(overlap);
-        float OS = (query_OL + target_OL) / 2.0f * SI;
+    float SI = getSequenceIdentity(overlap);
+    float OS = (query_OL + target_OL) / 2.0f * SI;
 
-        // TODO This shouldn't give negative values (or should it?).
-        float ES = std::abs(OS + query_EL / 2.0f - (query_OH + target_OH) / 2.0f);
+    // TODO This shouldn't give negative values (or should it?).
+    float ES = std::abs(OS + query_EL / 2.0f - (query_OH + target_OH) / 2.0f);
 
-        edges_.emplace_back(
-                qn_index, // Index of first node of the edge.
-                tn_index, // Index of second node of the edge.
-                overlap.query_start,
-                overlap.query_end,
-                overlap.target_start,
-                overlap.target_end,
-                OS, SI, ES);
+    edges_.emplace_back(
+            qn_index, // Index of first node of the edge.
+            tn_index, // Index of second node of the edge.
+            overlap.query_start,
+            overlap.query_end,
+            overlap.target_start,
+            overlap.target_end,
+            OS, SI, ES);
 
-        nodes_[qn_index].edges.push_back(edges_[edges_.size() - 1]);
-        nodes_[tn_index].edges.push_back(edges_[edges_.size() - 1]);
-    }
+    nodes_[qn_index].edges.push_back(edges_[edges_.size() - 1]);
+    nodes_[tn_index].edges.push_back(edges_[edges_.size() - 1]);
 }
 
 long OverlapGraph::nodeIndex(const std::string &name) const {
