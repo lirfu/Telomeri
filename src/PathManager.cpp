@@ -24,11 +24,11 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
         std::cout << "---> Building from node n" << start_node.index << std::endl;
 
         // Repeat path building from this starting point.
-        for (int i = 0; i < repeat_num; i++) {
-            Path p;
+        for (int r = 0; r < repeat_num; r++) {
             const OverlapGraph::Node *n = &start_node;
+            Path p;
 
-            std::cout << "...... Run " << (i + 1) << "   rebuild " << rebuilds << std::endl;
+            std::cout << "...... Run " << (r + 1) << " rebuild " << rebuilds << std::endl;
 
             // Store the starting node.
             p.nodes_.push_back(n);
@@ -36,38 +36,54 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
             // Defines will the path be added (considered).
             bool acceptable = false;
 
+            // Backtrack counter.
+            int backtracks = 0;
+            std::vector<const OverlapGraph::Node *> backtracked_nodes;
+
             // Construct the path.
             while (true) {
-                // Dead end.
-                if (n->edges.size() == 0) {
-                    if (n->anchor) {
-                        // This is just a lonely anchor, drop it as it doesn't represent a path.
-#ifdef DEBUG
-                        std::cout << "Dead anchor: " << p << std::endl;
-#endif
-                        break;
-                    } else {
-#ifdef DEBUG
-                        std::cout << "Dead read: " << p << std::endl;
-#endif
-                        break;
-                    }
-                }
-
                 // Sum-up the metric values.
                 double sum = 0;
+                const OverlapGraph::Edge *special_edge = nullptr;
                 for (const OverlapGraph::Edge &e : n->edges) {
-                    // Skip edges in wrong direction and visited edges.
-                    if (e.t_index == n->index && !Utils::contains(p.edges_, &e)) {
+                    // Skip edges in wrong direction and visited nodes.
+                    if (e.t_index == n->index
+                        && !Utils::contains(p.nodes_, &(g.nodes_[e.q_index]))
+                        && !Utils::contains(backtracked_nodes, &(g.nodes_[e.q_index]))) {
                         sum += getMetric(e, metric);
+                        if (!special_edge && g.nodes_[e.q_index].anchor) special_edge = &e;
                     }
                 }
 
-                // Dead-end detected, drop the path.
-                if (sum == 0) {
+                // No edges available (dead-end) and first one isn't an anchor (we love anchors).
+                if (sum == 0 && !(special_edge && g.nodes_[special_edge->q_index].anchor)) {
 #ifdef DEBUG
-                    std::cout << "Metrics sum to 0 (no appropriate edges): " << p << std::endl;
+                    std::cout << "Metric sum is 0: \t" << p << std::endl;
 #endif
+                    // Backtrack.
+                    if (backtracks < BACKTRACK_ATTEMPTS && p.edges_.size() > 1) {
+                        do {
+                            n = p.nodes_.back();
+                            p.nodes_.pop_back();
+                            p.edges_.pop_back();
+                        } while (!p.edges_.empty() && Utils::contains(backtracked_nodes, n));
+                        if (p.edges_.empty()) {
+#ifdef DEBUG
+                            std::cout << "Nothing to backtrack to!" << std::endl;
+#endif
+                            break;
+                        }
+                        backtracked_nodes.push_back(n);
+                        ++backtracks;
+#ifdef DEBUG
+                        std::cout << "Backtrack " << backtracks << "/"
+                                  << BACKTRACK_ATTEMPTS << " to: \t" << p << std::endl;
+#endif
+
+                        n = p.nodes_.back();
+                        p.updateLength();
+                        continue;
+                    }
                     break;
                 }
 
@@ -78,8 +94,10 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
                 const OverlapGraph::Edge *edge = nullptr;
                 sum = 0;
                 for (const OverlapGraph::Edge &e : n->edges) {
-                    // Skip edges in wrong direction and visited edges.
-                    if (e.t_index == n->index && !Utils::contains(p.edges_, &e)) {
+                    // Skip edges in wrong direction and visited nodes.
+                    if (e.t_index == n->index
+                        && !Utils::contains(p.nodes_, &(g.nodes_[e.q_index]))
+                        && !Utils::contains(backtracked_nodes, &(g.nodes_[e.q_index]))) {
                         sum += getMetric(e, metric);
                         if (sum >= random) { // Node found.
                             edge = &e;
@@ -89,7 +107,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
                 }
 
                 // Replace current node with next node.
-                n = &g.nodes_[edge->q_index];
+                n = &(g.nodes_[edge->q_index]);
 
                 // Add the selected edge and next node to path.
                 p.nodes_.push_back(n);
@@ -97,38 +115,42 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int repeat_num,
 
                 // If target node is anchor, add the node and break.
                 if (n->anchor) {
-#ifdef DEBUG
-                    std::cout << "New anchor found, path finished: " << p << std::endl;
-#endif
                     acceptable = true; // Accept path.
                     break;
                 }
-            }
 
-            p.updateLength();
-            std::cout << p.length() << "  " << p << std::endl;
+                p.updateLength();
+                // Length is too large.
+                if ((p.length() >= 0 ? p.length() : -p.length()) > LEN_THRESHOLD) {
+#ifdef DEBUG
+                    std::cout << "Length too large (" << p.length() << "): " << p << std::endl;
+#endif
+                    break;
+                }
+
+            }
 
             // Path ready to be added.
             if (acceptable) {
                 rebuilds = 0;
                 p.updateLength();
                 paths_.push_back(p);
-//#ifdef DEBUG
+#ifdef DEBUG
                 std::cout << "Added path #" << paths_.size() << ": " << p << std::endl;
-//#endif
+#endif
             } else if (rebuilds < REBUILD_ATTEMPTS) {
                 // Retry path building.
+                ++rebuilds;
+                --r;
 #ifdef DEBUG
                 std::cout << "Attempt re-build." << std::endl;
 #endif
-                ++rebuilds;
-                --i;
             } else {
-                //Stop retrying.
-                rebuilds = 0;
+                // Stop retrying.
 #ifdef DEBUG
                 std::cout << "Retry attempts wasted." << std::endl;
 #endif
+                break;
             }
         }
     }
@@ -315,10 +337,10 @@ std::string PathManager::stats() {
     ulong max_len = std::get<1>(mms);
     ulong sum_len = std::get<2>(mms);
 
-    str << "Paths"                          << std::endl
-        << "- total_num: " << paths_.size() << std::endl
-        << "-   min_len: " << min_len       << std::endl
-        << "-   max_len: " << max_len       << std::endl
+    str << "Paths"                          << '\n'
+        << "- total_num: " << paths_.size() << '\n'
+        << "-   min_len: " << min_len       << '\n'
+        << "-   max_len: " << max_len       << '\n'
         << "-   avg_len: " << (paths_.size() > 0 ? sum_len / paths_.size() : 0) << std::endl;
 
     return str.str();
