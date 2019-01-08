@@ -3,7 +3,6 @@
 #include <iostream>
 #include <fstream>
 
-
 #include <Utils.hpp>
 
 int getQueryOverlapLength(const OverlapGraph::PAFOverlap &overlap);
@@ -38,16 +37,16 @@ std::string OverlapGraph::stats() {
             max_con = n.edges.size();
     }
 
-    str << "Nodes"                          << std::endl
-        << "-  anchor: " << anchors         << std::endl
-        << "-    read: " << reads           << std::endl
-        << "-   total: " << nodes_.size()   << std::endl
-        << "- min_len: " << min_len         << std::endl
-        << "- max_len: " << max_len         << std::endl
-        << "- min_con: " << min_con         << std::endl
-        << "- max_con: " << max_con         << std::endl
-        << "Edges"                          << std::endl
-        << "-   total: " << edges_.size()   << std::endl;
+    str << "Nodes" << '\n'
+        << "-  anchor: " << anchors << '\n'
+        << "-    read: " << reads << '\n'
+        << "-   total: " << nodes_.size() << '\n'
+        << "- min_len: " << min_len << '\n'
+        << "- max_len: " << max_len << '\n'
+        << "- min_con: " << min_con << '\n'
+        << "- max_con: " << max_con << '\n'
+        << "Edges" << '\n'
+        << "-   total: " << edges_.size() << std::endl;
 
     return str.str();
 }
@@ -181,11 +180,11 @@ void OverlapGraph::buildFrom(
         int query_EL = getQueryExtensionLength(overlap);
         int query_OH = getQueryOverhangLength(overlap);
         int target_OH = getTargetOverhangLength(overlap);
+
         float SI = getSequenceIdentity(overlap);
+        float OS = (query_OL + target_OL) / 2.0f * SI;
 
-        float OS = (query_OL + target_OL) * SI / 2.0f;
-
-        // TODO This shouldn't give negative values (filtering problems).
+        // TODO This shouldn't give negative values (or should it?).
         float ES = std::abs(OS + query_EL / 2.0f - (query_OH + target_OH) / 2.0f);
 
         edges_.emplace_back(
@@ -219,19 +218,16 @@ bool OverlapGraph::Node::operator==(const Node &rhs) const {
     return name == rhs.name;
 }
 
+void OverlapGraph::Node::to_stream(std::ostream &s) const {
+    s << (anchor ? '*' : ' ') << 'n' << index << "  len: " << length
+      << "  name: " << name << "  edges: " << edges.size() << std::endl;
+}
+
 OverlapGraph::Edge::Edge(uint q_index, uint t_index, uint q_start, uint q_end, uint t_start, uint t_end,
                          float overlap_score, float sequence_identity, float extension_score)
         : q_index(q_index), t_index(t_index), q_start(q_start), q_end(q_end), t_start(t_start), t_end(t_end),
           overlap_score(overlap_score), sequence_identity(sequence_identity),
           extension_score(extension_score) {}
-
-constexpr OverlapGraph::Edge::Edge(const OverlapGraph::Edge &e)
-        : q_index(e.q_index), t_index(e.t_index),
-          q_start(e.q_start), q_end(e.q_end),
-          t_start(e.t_start), t_end(e.t_end),
-          overlap_score(e.overlap_score),
-          sequence_identity(e.sequence_identity),
-          extension_score(e.extension_score) {}
 
 OverlapGraph::Edge &OverlapGraph::Edge::operator=(OverlapGraph::Edge &&e) noexcept {
     std::swap(q_index, e.q_index);
@@ -244,6 +240,11 @@ OverlapGraph::Edge &OverlapGraph::Edge::operator=(OverlapGraph::Edge &&e) noexce
     std::swap(sequence_identity, e.sequence_identity);
     std::swap(extension_score, e.extension_score);
     return *this;
+}
+
+void OverlapGraph::Edge::to_stream(std::ostream &s) const {
+    s << q_index << "-" << t_index << "  OS: " << overlap_score
+      << "  ES: " << extension_score << "  SI: " << sequence_identity << std::endl;
 }
 
 int getQueryOverlapLength(const OverlapGraph::PAFOverlap &overlap) {
@@ -271,6 +272,6 @@ int getTargetExtensionLength(const OverlapGraph::PAFOverlap &overlap) {
 }
 
 float getSequenceIdentity(const OverlapGraph::PAFOverlap &overlap) {
-    return overlap.residue_matches_num /
-           std::min(overlap.query_len, overlap.target_len);
+    return overlap.residue_matches_num / (float)
+            std::min(overlap.query_len, overlap.target_len);
 }

@@ -19,7 +19,9 @@ public:
 
         Node(bool anchor, uint index, uint length, const std::string &name);
 
-        bool operator==(const Node &rhs) const;
+        bool operator==(const Node &) const;
+
+        void to_stream(std::ostream &) const;
     };
 
     struct Edge {
@@ -32,9 +34,11 @@ public:
              float overlap_score, float sequence_identity,
              float extension_score);
 
-        constexpr Edge(const Edge &);
+        constexpr Edge(const Edge &) = default;
 
         Edge &operator=(Edge &&) noexcept;
+
+        void to_stream(std::ostream &) const;
     };
 
     struct PAFOverlap {
