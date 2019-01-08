@@ -5,8 +5,7 @@
 #include <PathWindow.hpp>
 #include <bitset>
 
-void PathManager::buildMonteCarlo(const OverlapGraph &g, int paths_num,
-                                  const Utils::Metrics &metric) {
+void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &metric) {
     std::srand(40);
     std::cout << "> Monte Carlo heuristic" << std::endl;
 
@@ -17,20 +16,14 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int paths_num,
             continue;
         }
 
-        // Used for monitoring the number of path re-build attempts (dead-ends).
-        // Blocks the possibility of +oo loops when re-building paths.
-        // After N attempts, path is just dropped.
-        int rebuilds = 0;
-
         std::cout << "---> Building from node n" << start_node.index << std::endl;
 
         // Repeat path building from this starting point.
-        for (int r = 0; r < paths_num; r++) {
+        for (int r = 0; r < REBUILD_ATTEMPTS; r++) {
             const OverlapGraph::Node *n = &start_node;
             Path p;
 
-            std::cout << "...... Run " << (r + 1) << '/' << paths_num
-                      << " rebuild " << rebuilds << '/' << REBUILD_ATTEMPTS << std::endl;
+            std::cout << "...... Run " << (r + 1) << '/' << REBUILD_ATTEMPTS << std::endl;
 
             // Store the starting node.
             p.nodes_.push_back(n);
@@ -47,18 +40,22 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int paths_num,
                 // Sum-up the metric values.
                 double sum = 0;
                 const OverlapGraph::Edge *anchor_edge = nullptr;
+                std::vector<const OverlapGraph::Edge *> appropriate_edges;
                 for (const OverlapGraph::Edge &e : n->edges) {
                     const OverlapGraph::Node *q_n = &(g.nodes_[e.q_index]);
+
                     // If edge leads to anchor different from starting one, force select it.
                     if (q_n->anchor && q_n->index != start_node.index) {
                         anchor_edge = &e;
                         break;
                     }
+
                     // Skip edges in wrong direction and visited nodes.
                     if (e.t_index == n->index
                         && !Utils::contains(p.nodes_, q_n)
                         && !Utils::contains(backtracked_nodes, q_n)) {
                         sum += getMetric(e, metric);
+                        appropriate_edges.push_back(&e);
                     }
                 }
 
@@ -66,9 +63,9 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int paths_num,
                 if (anchor_edge) {
                     edge = anchor_edge;
                 } else { // Select one at random.
-                    if (sum == 0) { // No edges available (dead-end) and anchor isn't found.
+                    if (appropriate_edges.empty()) { // No edges available (dead-end) and anchor isn't found.
 #ifdef DEBUG
-                        std::cout << "Metric sum is 0: \t" << p << std::endl;
+                        std::cout << "No edges available for: \t" << p << std::endl;
 #endif
                         // Backtrack.
                         if (backtracks < BACKTRACK_ATTEMPTS && p.edges_.size() > 1) {
@@ -91,25 +88,19 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int paths_num,
 #endif
 
                             n = p.nodes_.back();
-                            p.updateLength();
                             continue;
                         }
                         break;
-                    }
+                    } else {
+                        // Select a random number from [0, sum]
+                        double random = std::rand() / (double) RAND_MAX * sum;
 
-                    // Select a random number from [0, sum]
-                    double random = std::rand() / (double) RAND_MAX * sum;
-
-                    // Find the selected edge.
-                    sum = 0;
-                    for (const OverlapGraph::Edge &e : n->edges) {
-                        // Skip edges in wrong direction and visited nodes.
-                        if (e.t_index == n->index
-                            && !Utils::contains(p.nodes_, &(g.nodes_[e.q_index]))
-                            && !Utils::contains(backtracked_nodes, &(g.nodes_[e.q_index]))) {
-                            sum += getMetric(e, metric);
+                        // Find the selected edge.
+                        sum = 0;
+                        for (const OverlapGraph::Edge *e : appropriate_edges) {
+                            sum += getMetric(*e, metric);
                             if (sum >= random) { // Node found.
-                                edge = &e;
+                                edge = e;
                                 break;
                             }
                         }
@@ -129,11 +120,12 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int paths_num,
                     break;
                 }
 
-                p.updateLength();
-                // Length is too large.
-                if ((p.length() >= 0 ? p.length() : -p.length()) > LEN_THRESHOLD) {
+//                p.updateLength();
+                // Abort if length is too large.
+                if (p.nodes_.size() >= NODE_NUM_THRESHOLD
+                    /*(p.length() >= 0 ? p.length() : -p.length()) > LEN_THRESHOLD*/) {
 #ifdef DEBUG
-                    std::cout << "Length too large (" << p.length() << "): " << p << std::endl;
+                    std::cout << "Length too large (" << p.nodes_.size() << "): " << p << std::endl;
 #endif
                     break;
                 }
@@ -142,24 +134,17 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int paths_num,
 
             // Path ready to be added.
             if (acceptable) {
-                rebuilds = 0;
                 p.updateLength();
                 paths_.push_back(p);
-                std::cout << "Found path #" << paths_.size() << ": " << p << std::endl;
-
-            } else if (rebuilds < REBUILD_ATTEMPTS) {
-                // Retry path building.
-                ++rebuilds;
-                --r;
-#ifdef DEBUG
-                std::cout << "Attempt re-build." << std::endl;
-#endif
+                std::cout << "Found path #" << paths_.size() << " of " << p.nodes_.size() << " nodes and "
+                          << p.length() << "pairs: " << p << std::endl;
             } else {
-                // Stop retrying.
 #ifdef DEBUG
-                std::cout << "Retry attempts wasted." << std::endl;
+                std::cout << "No path found!" << std::endl;
+                p.updateLength();
+                std::cout << "Aborted paths' length: " << p.length() << "bp, "
+                          << p.nodes_.size() << " nodes." << std::endl;
 #endif
-                break;
             }
         }
     }

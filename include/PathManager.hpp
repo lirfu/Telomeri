@@ -13,8 +13,7 @@ class PathManager {
 private:
     std::vector<Path> paths_;
 public:
-    void buildMonteCarlo(const OverlapGraph &g, int paths_num,
-            const Utils::Metrics &metric);
+    void buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &metric);
 
     void buildDeterministic(const OverlapGraph &g,
             const Utils::Metrics &metric);
@@ -28,12 +27,14 @@ public:
     std::vector<PathGroup> constructGroups();
 private:
     /** Number of path rebuild attempts if dead-end has been reached. */
-    static constexpr int REBUILD_ATTEMPTS = 30;
+    static constexpr int REBUILD_ATTEMPTS = 50000;
     /** Number of backtrack attempts when encountering a dead-end. */
-    static constexpr int BACKTRACK_ATTEMPTS = 5;
+    static constexpr int BACKTRACK_ATTEMPTS = 10;
     /** If difference between maximum and minimum path length is greater than
      *  this threshold,, all paths go into same group. */
     static constexpr long LEN_THRESHOLD = 10000000000ul;
+    /** Faster and simpler metric for length. */
+    static constexpr long NODE_NUM_THRESHOLD = 100;
     /** Window size in path length. */
     static constexpr ulong WINDOW_SIZE = 1000ul;
     /** Valley and peak ratio needed for splitting the paths into groups
