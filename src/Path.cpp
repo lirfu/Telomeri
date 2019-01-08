@@ -6,15 +6,13 @@ void Path::updateLength() {
     if (nodes_.empty()) {
         length_ = 0;
         return;
-    } else if (nodes_.size() == 1) {
-        length_ = nodes_[0]->length;
-        return;
     }
-    length_ = edges_[0]->t_end - 0;
+
+    length_ = nodes_[0]->length;
     for (uint i = 1; i < edges_.size(); i++) {
-        length_ += edges_[i]->t_end - (long) edges_[i - 1]->q_end;
+        length_ += nodes_[i]->length - (long) edges_[i - 1]->q_end
+                   - (nodes_[i - 1]->length - (long) edges_[i - 1]->t_end);
     }
-    length_ += nodes_[nodes_.size() - 1]->length - edges_[edges_.size() - 1]->q_end;
 }
 
 long Path::length() const {
