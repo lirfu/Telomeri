@@ -48,16 +48,17 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, int paths_num,
                 double sum = 0;
                 const OverlapGraph::Edge *anchor_edge = nullptr;
                 for (const OverlapGraph::Edge &e : n->edges) {
+                    const OverlapGraph::Node *q_n = &(g.nodes_[e.q_index]);
+                    // If edge leads to anchor different from starting one, force select it.
+                    if (q_n->anchor && q_n->index != start_node.index) {
+                        anchor_edge = &e;
+                        break;
+                    }
                     // Skip edges in wrong direction and visited nodes.
                     if (e.t_index == n->index
-                        && !Utils::contains(p.nodes_, &(g.nodes_[e.q_index]))
-                        && !Utils::contains(backtracked_nodes, &(g.nodes_[e.q_index]))) {
+                        && !Utils::contains(p.nodes_, q_n)
+                        && !Utils::contains(backtracked_nodes, q_n)) {
                         sum += getMetric(e, metric);
-                        // If edge leads to anchor different from starting one, force select it.
-                        if (g.nodes_[e.q_index].index != start_node.index && g.nodes_[e.q_index].anchor) {
-                            anchor_edge = &e;
-                            break;
-                        }
                     }
                 }
 
