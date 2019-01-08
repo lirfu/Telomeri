@@ -62,14 +62,14 @@ int main(int argc, char **argv) {
         std::cerr << "Usage: hera [filter_option...] <read-read_overlap_file>.paf "
                   << "<contig-read_overlap_file>.paf" << std::endl;
         std::cerr << "Available filter options:\n"
-                  << "    --filter-avg         Use average length in filter comparisons (default value)."
-                  << "    --filter-min         Use shorter length in filter comparisons."
-                  << "    --filter-max         Use longer length in filter comparisons."
-                  << "    --filter-sum         Use sum of lengths in filter comparisons."
-                  << "    --min-oll <value>    Minimum required overlap length (default = 0)."
-                  << "    --min-olp <value>    Minimum required overlap percentage (default = 0)."
-                  << "    --max-ohl <value>    Maximum allowed overhang length (default = INT_MAX)."
-                  << "    --max-ohP <value>    Maximum allowed overhang percentage (default = 1.0)."
+                  << "    --filter-avg         Use average length in filter comparisons (default value).\n"
+                  << "    --filter-min         Use shorter length in filter comparisons.\n"
+                  << "    --filter-max         Use longer length in filter comparisons.\n"
+                  << "    --filter-sum         Use sum of lengths in filter comparisons.\n"
+                  << "    --min-oll <value>    Minimum required overlap length (default = 0).\n"
+                  << "    --min-olp <value>    Minimum required overlap percentage (default = 0).\n"
+                  << "    --max-ohl <value>    Maximum allowed overhang length (default = INT_MAX).\n"
+                  << "    --max-ohP <value>    Maximum allowed overhang percentage (default = 1.0).\n"
                   << "Percentages are in range [0.0, 1.0]." << std::endl;
         return 1;
     } else if (argc > 3) {
@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
     // Construct paths with following heuristics.
     std::cout << "Calculating paths..." << std::endl;
     PathManager pm;
-    pm.buildMonteCarlo(graph, 10, Utils::Metrics::EXTENSION_SCORE);
+    pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE);
     pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE);
     pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE);
 
