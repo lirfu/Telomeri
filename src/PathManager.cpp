@@ -6,7 +6,9 @@
 #include <bitset>
 
 void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &metric) {
-    std::srand(40);
+    std::mt19937 gen(42);
+    std::uniform_real_distribution<> dis(0., 1.);
+
     std::cout << "> Monte Carlo heuristic" << std::endl;
 
     // For each anchor-node as starting point.
@@ -24,7 +26,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
             Path p;
 
             std::cout << "...... Run " << (r + 1) << '/' << REBUILD_ATTEMPTS
-                    << "  (" << paths_.size() << " found)" << std::endl;
+                      << "  (" << paths_.size() << " found)" << std::endl;
 
             // Store the starting node.
             p.nodes_.push_back(n);
@@ -94,7 +96,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                         break;
                     } else {
                         // Select a random number from [0, sum]
-                        double random = std::rand() / (double) RAND_MAX * sum;
+                        double random = dis(gen) * sum;
 
                         // Find the selected edge.
                         sum = 0;
@@ -121,16 +123,13 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                     break;
                 }
 
-//                p.updateLength();
                 // Abort if length is too large.
-                if (p.nodes_.size() >= NODE_NUM_THRESHOLD
-                    /*(p.length() >= 0 ? p.length() : -p.length()) > LEN_THRESHOLD*/) {
+                if (p.nodes_.size() >= NODE_NUM_THRESHOLD) {
 #ifdef DEBUG
                     std::cout << "Length too large (" << p.nodes_.size() << "): " << p << std::endl;
 #endif
                     break;
                 }
-
             }
 
             // Path ready to be added.
