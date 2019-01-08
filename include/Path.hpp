@@ -6,14 +6,14 @@
 
 class Path {
 private:
-    ulong length_;
+    long length_;
 public:
     std::vector<const OverlapGraph::Node *> nodes_;
     std::vector<const OverlapGraph::Edge *> edges_;
 
     void updateLength();
 
-    ulong length() const;
+    long length() const;
 
     friend std::ostream &operator<<(std::ostream &s, const Path &p);
 
