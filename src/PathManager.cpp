@@ -23,7 +23,8 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
             const OverlapGraph::Node *n = &start_node;
             Path p;
 
-            std::cout << "...... Run " << (r + 1) << '/' << REBUILD_ATTEMPTS << std::endl;
+            std::cout << "...... Run " << (r + 1) << '/' << REBUILD_ATTEMPTS
+                    << "  (" << paths_.size() << " found)" << std::endl;
 
             // Store the starting node.
             p.nodes_.push_back(n);
