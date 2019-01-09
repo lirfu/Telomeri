@@ -24,7 +24,21 @@ public:
 
     std::string stats();
 
-    std::vector<PathGroup> constructGroups();
+    /** Constructs groups from the paths passed in. This should be paths that
+     * connect a pair of anchors.
+     * @param v Paths connecting two anchors. Sorted when this function returns.
+     * @return Groups of paths between two anchors. */
+    static std::vector<PathGroup> constructGroups(std::vector<const Path*>& v);
+
+    static std::pair<ulong, ulong> getMinMaxPathLength(std::vector<const Path*>& v);
+
+    /** Returns map that maps anchor pair to all paths beetween those achors:
+     * [anchor1, achor2] => {path1, path2,...}
+     *@return Map of anchor pair and paths between those anchors. */
+    std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
+    std::vector<const Path*>>
+    getPathsBetweenAnchors();
+
 private:
     /** Number of path rebuild attempts if dead-end has been reached. */
     static constexpr int REBUILD_ATTEMPTS = 500;

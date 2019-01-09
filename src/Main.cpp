@@ -173,20 +173,58 @@ int main(int argc, char **argv) {
     pm.filterUnique();
     std::cout << "Done (" << timer.lap() << "s)" << std::endl << pm.stats() << std::endl;
 
-    // Construct groups.
-    std::cout << "Constructing groups..." << std::endl;
-    std::vector<PathGroup> pgs = pm.constructGroups();
-    for (size_t i = 0; i < pgs.size(); i++) {
-        std::cout << "-- Group " << i << " lengths --\n" << pgs[i] << "\n-------------------\n\n";
-    }
-    std::cout << "Done (" << timer.lap() << "s)\n" << std::endl;
+    // Map of anchor pairs and paths between those two anchors: [anchor1, anchor2] => {path1, path2, ...}
+    auto paths_between_anchors = pm.getPathsBetweenAnchors();
 
-    // Discard infrequent paths in each group.
-    std::cout << "Discarding infrequent paths in each group..." << std::endl;
-    for (PathGroup& pg : pgs) {
-        pg.discardNotFrequent();
+    // Map of path groups between those two anchors: [anchor1, anchor2] => {group1, group2, ...}
+    std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
+    std::vector<PathGroup>> groups_for_anchors;
+
+    for (auto& pbai : paths_between_anchors) { // Construct groups and fill groups_for_anchors map.
+        const OverlapGraph::Node& anchor1 = *pbai.first.first;  // Begin anchor.
+        const OverlapGraph::Node& anchor2 = *pbai.first.second; // End anchor.
+        std::vector<const Path*>& paths = pbai.second;          // Paths connecting begin and end anchor.
+
+        std::cout << "====> Constructing groups for paths between anchor '" << anchor1.name
+            << "' and anchor '" << anchor2.name << "'..." << std::endl;
+        std::vector<PathGroup> pgs = PathManager::constructGroups(paths);
+        for (size_t i = 0; i < pgs.size(); i++) {
+            std::cout << "-- Group " << i << " lengths --\n" << pgs[i] << "\n---------------------\n";
+        }   
+        std::cout << "====> Finished constructing groups for paths between anchor '"
+            << anchor1.name << "' and anchor '" << anchor2.name << "'!\n" << std::endl;
+
+        groups_for_anchors[{&anchor1, &anchor2}] = pgs; // Store all groups for the anchor in the map of path groups.
     }
-    std::cout << "Done (" << timer.lap() << "s)\n" << std::endl;
+    
+    std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
+    const Path*> consensus_for_anchors;
+    for (auto& anchors_groups_pair : groups_for_anchors) { // Iterate over map, ([a1, a2], path_groups) pairs.
+        std::vector<PathGroup>& pgs = anchors_groups_pair.second;
+        for (PathGroup& pg : pgs) {  // Iterate over path groups.
+            pg.discardNotFrequent(); // Discard infrequent paths in each group.
+            pg.calculateConsensusPath(); // Calculate consensus path for this group and set it in pg object.
+
+            if (pg.consensus) std::cout << pg.consensus->length() << std::endl;
+            else std::cout << "No consensus sequence for group: " << pg << std::endl;
+        }   
+        std::cout << "-----" << std::endl;
+    }
+
+    // Construct groups.
+//    std::cout << "Constructing groups..." << std::endl;
+//    std::vector<PathGroup> pgs = pm.constructGroups();
+//    for (size_t i = 0; i < pgs.size(); i++) {
+//        std::cout << "-- Group " << i << " lengths --\n" << pgs[i] << "\n-------------------\n\n";
+//    }
+//    std::cout << "Done (" << timer.lap() << "s)\n" << std::endl;
+//
+//    std::cout << "Discarding infrequent paths in each group..." << std::endl;
+//    for (PathGroup& pg : pgs) {
+//        
+//        
+//    }
+//    std::cout << "Done (" << timer.lap() << "s)\n" << std::endl;
 
     // TODO Re-group based on current group scores (this may be misinterpreted).
     // SomeOtherFunc f1;

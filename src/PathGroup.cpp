@@ -2,10 +2,11 @@
 
 #include <iostream>
 #include <algorithm>
+#include <numeric>
 
  PathGroup::PathGroup(std::vector<const Path*>::const_iterator begin,
         std::vector<const Path*>::const_iterator end)
-        : pig_(begin, end)
+        : pig_(begin, end), consensus(nullptr)
 {
     /* NOTE: This could be double work if group is made after path windows
      * are build since windows already contain frqs map for paths that are
@@ -57,6 +58,24 @@ void PathGroup::discardNotFrequent() {
 #endif
 
     deleteAtIndices(pig_, deleteIndices); // Delete paths at found indices.
+}
+
+
+void PathGroup::calculateConsensusPath() {
+    // If group has paths of higly different lengths, consensus cannot be made.
+    if (pig_.back()->length() - pig_.front()->length() > CONSENSUS_THRESHOLD) {
+        consensus = nullptr;
+    }
+
+    // Calculate average path length.
+    size_t avg = std::accumulate(pig_.begin(), pig_.end(), 0,
+            [] (size_t sum, const Path* p) { return sum + p->length(); })
+        / pig_.size();
+
+    // Return first element that has average or higher path length.
+    for (const auto pp : pig_) if (pp->length() >= avg) consensus = pp;
+
+    consensus = pig_.back(); // Return last element if none was found before.
 }
 
 

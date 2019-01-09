@@ -401,20 +401,16 @@ std::tuple<ulong, ulong, ulong> PathManager::getMinMaxSumPathLength() {
 
 
 
-
 std::vector<ulong> getBorderPathLengths(const std::vector<PathWindow>& pws,
         float ratio_threshold);
-std::vector<PathGroup> PathManager::constructGroups() {
-    // Get min and max path lengths.
-    std::tuple<ulong, ulong, ulong> mms = getMinMaxSumPathLength();
-    ulong min_len = std::get<0>(mms);
-    ulong max_len = std::get<1>(mms);
 
-    // Create a sorted view (ascending) over paths_ array.
-    std::vector<const Path*> v(paths_.size(), nullptr);
-    for (size_t i = 0, n = v.size(); i < n; i++) {
-        v[i] = &paths_[i];
-    }
+std::vector<PathGroup> PathManager::constructGroups(std::vector<const Path*>& v) {
+    // Get min and max path lengths.
+    std::pair<ulong, ulong> mm = getMinMaxPathLength(v);
+    ulong min_len = mm.first;
+    ulong max_len = mm.second;
+
+    // Sort paths for those two anchors in ascending order.
     std::sort(v.begin(), v.end(),
             [](const Path* a, const Path* b) {
                 return a->length() < b->length();
@@ -422,7 +418,7 @@ std::vector<PathGroup> PathManager::constructGroups() {
 
     // Create path groups.
     std::vector<PathGroup> pgs;
-    if (max_len - min_len < LEN_THRESHOLD) {  // If all paths go in one group.
+    if (max_len - min_len < LEN_THRESHOLD) { // If all paths go in one group.
         // Insert all elements from 'v' into first (and only) group.
         pgs.emplace_back(v.begin(), v.end());
     } else {
@@ -457,8 +453,8 @@ std::vector<PathGroup> PathManager::constructGroups() {
         if (bs.size()) {
             std::cout << "Dividing path lengths: ";
             for_each(bs.begin(), bs.end(), [] (ulong el) {std::cout << el << ' ';});
-            std::cout << std::endl << std::endl;
-        } else std::cout << "No dividing path lengths found!\n" << std::endl;
+            std::cout << std::endl;
+        } else std::cout << "No dividing path lengths found!" << std::endl;
 #endif
         if (bs.empty()) { // No dividing path lengths has been found.
             // Insert all elements from 'v' into first (and only) group.
@@ -522,4 +518,40 @@ std::vector<ulong> getBorderPathLengths(const std::vector<PathWindow>& pws,
     return dividing_path_lengths;
 }
 
+std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
+std::vector<const Path*>>
+PathManager::getPathsBetweenAnchors() {
+    // Map containing all paths between to anchors: [anchor1, achor2] => {path1, path2,...}
+    std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
+        std::vector<const Path*>> paths_between_anchors;
+    
+    // Iterate over paths and add each to entry for its anchors.
+    for (const Path& p : paths_) { 
+        std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*> anchors
+            = {p.nodes_.front(), p.nodes_.back()};
+        if (paths_between_anchors.count(anchors)) { // Entry exists for those two anchors.
+            paths_between_anchors[anchors].push_back(&p);
+        } else { // Entry for those two anchors does not exist in the map - create it.
+            paths_between_anchors[anchors] = std::vector<const Path*>(1, &p);
+        }
+    }
 
+    return paths_between_anchors;
+}
+
+
+std::pair<ulong, ulong> PathManager::getMinMaxPathLength(std::vector<const Path*>& v) {
+    ulong min_len = ULONG_MAX, max_len = 0;
+
+    for (const Path* p : v) { // Iterate over all paths.
+        ulong l = p->length();
+        if (min_len > l) {
+            min_len = l;
+        }
+        if (max_len < l) {
+            max_len = l;
+        }
+    }
+
+    return {min_len, max_len};
+}
