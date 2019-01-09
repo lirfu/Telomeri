@@ -10,6 +10,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
     std::uniform_real_distribution<> dis(0., 1.);
 
     std::cout << "> Monte Carlo heuristic" << std::endl;
+    ulong found = 0;
 
     // For each anchor-node as starting point.
     for (const OverlapGraph::Node &start_node : g.nodes_) {
@@ -24,9 +25,11 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
         for (int r = 0; r < REBUILD_ATTEMPTS; r++) {
             const OverlapGraph::Node *n = &start_node;
             Path p;
+            std::vector<bool> visited_nodes(g.nodes_.size(), false);
+            visited_nodes[n->index] = true;
 
             std::cout << "...... Run " << (r + 1) << '/' << REBUILD_ATTEMPTS
-                      << "  (" << paths_.size() << " found)" << std::endl;
+                      << "  (" << found << " found)" << std::endl;
 
             // Store the starting node.
             p.nodes_.push_back(n);
@@ -36,7 +39,6 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
 
             // Backtrack counter.
             int backtracks = 0;
-            std::vector<const OverlapGraph::Node *> backtracked_nodes;
 
             // Construct the path.
             while (true) {
@@ -45,7 +47,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 const OverlapGraph::Edge *anchor_edge = nullptr;
                 std::vector<const OverlapGraph::Edge *> appropriate_edges;
                 for (const OverlapGraph::Edge &e : n->edges) {
-                    const OverlapGraph::Node *q_n = &(g.nodes_[e.q_index]);
+                    const OverlapGraph::Node *q_n = &(g.nodes_[e.q_index==n->index ? e.t_index : e.q_index]);
 
                     // If edge leads to anchor different from starting one, force select it.
                     if (q_n->anchor && q_n->index != start_node.index) {
@@ -53,69 +55,72 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                         break;
                     }
 
-                    // Skip edges in wrong direction and visited nodes.
-                    if (e.t_index == n->index
-                        && !Utils::contains(p.nodes_, q_n)
-                        && !Utils::contains(backtracked_nodes, q_n)) {
+                    // Skip visited nodes.
+                    if (!visited_nodes[q_n->index]) {
                         sum += getMetric(e, metric);
                         appropriate_edges.push_back(&e);
                     }
                 }
 
                 const OverlapGraph::Edge *edge = nullptr;
-                if (anchor_edge) {
+                if (anchor_edge) {  // If points to anchor, use it.
                     edge = anchor_edge;
-                } else { // Select one at random.
-                    if (appropriate_edges.empty()) { // No edges available (dead-end) and anchor isn't found.
+                } else if (appropriate_edges.empty()) {  // No edges available (dead-end), backtrack.
 #ifdef DEBUG
-                        std::cout << "No edges available for: \t" << p << std::endl;
+                    std::cout << "No edges available for: \t" << p << std::endl;
 #endif
-                        // Backtrack.
-                        if (backtracks < BACKTRACK_ATTEMPTS && p.edges_.size() > 1) {
-                            do {
-                                n = p.nodes_.back();
-                                p.nodes_.pop_back();
-                                p.edges_.pop_back();
-                            } while (!p.edges_.empty() && Utils::contains(backtracked_nodes, n));
-                            if (p.edges_.empty()) {
-#ifdef DEBUG
-                                std::cout << "Nothing to backtrack to!" << std::endl;
-#endif
-                                break;
+                    if (backtracks < BACKTRACK_ATTEMPTS && p.edges_.size() > 1) {  // Backtrack possible.
+                        bool t = false;
+                        do {
+                            p.nodes_.pop_back();
+                            p.edges_.pop_back();
+                            for (const OverlapGraph::Edge &e : p.nodes_.back()->edges) {
+                                if(!visited_nodes[e.q_index]) {
+                                    // Stop backing if you find an edge leading to unvisited node.
+                                    t = true;
+                                    break;
+                                }
                             }
-                            backtracked_nodes.push_back(n);
-                            ++backtracks;
-#ifdef DEBUG
-                            std::cout << "Backtrack " << backtracks << "/"
-                                      << BACKTRACK_ATTEMPTS << " to: \t" << p << std::endl;
-#endif
+                        } while (!p.edges_.empty() && !t);
 
-                            n = p.nodes_.back();
-                            continue;
+                        if (p.edges_.empty()) {
+#ifdef DEBUG
+                            std::cout << "Nothing to backtrack to: " << p << std::endl;
+#endif
+                            break;
                         }
-                        break;
-                    } else {
-                        // Select a random number from [0, sum]
-                        double random = dis(gen) * sum;
+                        ++backtracks;
+#ifdef DEBUG
+                        std::cout << "Backtrack " << backtracks << "/"
+                                  << BACKTRACK_ATTEMPTS << " to: \t" << p << std::endl;
+#endif
 
-                        // Find the selected edge.
-                        sum = 0;
-                        for (const OverlapGraph::Edge *e : appropriate_edges) {
-                            sum += getMetric(*e, metric);
-                            if (sum >= random) { // Node found.
-                                edge = e;
-                                break;
-                            }
+                        n = p.nodes_.back();
+                        continue;
+                    }
+                    break;
+                } else { // Select one at random.
+                    // Select a random number from [0, sum]
+                    double random = dis(gen) * sum;
+
+                    // Find the selected edge.
+                    sum = 0;
+                    for (const OverlapGraph::Edge *e : appropriate_edges) {
+                        sum += getMetric(*e, metric);
+                        if (sum >= random) { // Node found.
+                            edge = e;
+                            break;
                         }
                     }
                 }
 
                 // Replace current node with next node.
-                n = &(g.nodes_[edge->q_index]);
+                n = &(g.nodes_[edge->q_index==n->index ? edge->t_index : edge->q_index]);
 
                 // Add the selected edge and next node to path.
                 p.nodes_.push_back(n);
                 p.edges_.push_back(edge);
+                visited_nodes[n->index] = true;
 
                 // If node is anchor, add the node and break.
                 if (n->anchor) {
@@ -136,18 +141,24 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
             if (acceptable) {
                 p.updateLength();
                 paths_.push_back(p);
-                std::cout << "Found path #" << paths_.size() << " of " << p.nodes_.size() << " nodes and "
-                          << p.length() << "pairs: " << p << std::endl;
-            } else {
+                ++found;
 #ifdef DEBUG
+                std::cout << "Found path #" << paths_.size() << " of " << p.nodes_.size() << " nodes and "
+                          << p.length() << " paths: " << p << std::endl;
+#endif
+            }
+#ifdef DEBUG
+            else {
                 std::cout << "No path found!" << std::endl;
                 p.updateLength();
                 std::cout << "Aborted paths' length: " << p.length() << "bp, "
                           << p.nodes_.size() << " nodes." << std::endl;
-#endif
             }
+#endif
         }
     }
+
+    std::cout << "Found " << found << " paths." << std::endl;
 }
 
 void PathManager::buildDeterministic(const OverlapGraph &g,
