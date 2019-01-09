@@ -65,6 +65,7 @@ void PathGroup::calculateConsensusPath() {
     // If group has paths of higly different lengths, consensus cannot be made.
     if (pig_.back()->length() - pig_.front()->length() > CONSENSUS_THRESHOLD) {
         consensus = nullptr;
+        return;
     }
 
     // Calculate average path length.
