@@ -7,16 +7,16 @@ enum ParseState {
     NONE, OLL, OLP, OHL, OHP
 };
 
-int try_parse_len(const char *s) {
+ulong try_parse_len(const char *s) {
     try {
-        int v = std::stoi(s);
+        long v = std::stol(s);
 
         if (v < 0) {
             std::cerr << "Value must be positive: " << s << std::endl;
             exit(1);
         }
 
-        return v;
+        return static_cast<ulong>(v);
     } catch (std::invalid_argument& e) {
         std::cerr << "Invalid int value: " << s << std::endl;
     } catch (std::out_of_range& e) {
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
             OverlapGraph::AVG,
             0,
             0.0f,
-            INT_MAX,
+            ULONG_MAX,
             1.0f
     };
 
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
     // FIXME Just for testing.
     graph.test_load_num_ = 100000;
 
-    std::cout << "Loading files..." << std::endl;
+    std::cout << "\nLoading files..." << std::endl;
     if (!graph.load(rr_file, false) || !graph.load(cr_file, true)) {
         return 1;
     }

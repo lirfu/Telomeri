@@ -61,9 +61,9 @@ public:
 
     struct FilterParameters {
         LengthCalculationMode mode; /** Mode of length calculation */
-        int min_overlap_length; /** Minimum required overlap length */
+        ulong min_overlap_length; /** Minimum required overlap length */
         float min_overlap_percentage; /** Minimum required overlap length, as percentage to total length */
-        int max_overhang_length; /** Maximum allowed overhang length */
+        ulong max_overhang_length; /** Maximum allowed overhang length */
         float max_overhang_percentage; /** Maximum allowed overhang length, as percentage of overlap length */
     };
 
