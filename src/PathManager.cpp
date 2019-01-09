@@ -1,9 +1,10 @@
 #include <PathManager.hpp>
 
 #include <iostream>
+#include <bitset>
+#include <random>
 
 #include <PathWindow.hpp>
-#include <bitset>
 
 void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &metric) {
     std::mt19937 gen(42);
@@ -160,8 +161,8 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
 
     std::cout << "Found " << found << " paths." << std::endl;
 #ifdef DEBUG
-    filterUnique();
-    std::cout << "Total new: " << (paths_.size() - orig_size) << std::endl;
+    //filterUnique();
+    //std::cout << "Total new: " << (paths_.size() - orig_size) << std::endl;
 #endif
 }
 

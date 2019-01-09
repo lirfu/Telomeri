@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 
 #include <OverlapGraph.hpp>
 
