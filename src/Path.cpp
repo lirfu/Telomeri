@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <cmath> // FIXME remove me!
+
 void Path::updateLength() {
     if (nodes_.empty()) {
         length_ = 0;
@@ -13,6 +15,7 @@ void Path::updateLength() {
         length_ += nodes_[i]->length - (long) edges_[i - 1]->q_end
                    - (nodes_[i - 1]->length - (long) edges_[i - 1]->t_end);
     }
+    length_ = std::abs(length_); // FIXME REMOVE ME!
 }
 
 long Path::length() const {
