@@ -27,14 +27,14 @@ public:
     std::vector<PathGroup> constructGroups();
 private:
     /** Number of path rebuild attempts if dead-end has been reached. */
-    static constexpr int REBUILD_ATTEMPTS = 100;
+    static constexpr int REBUILD_ATTEMPTS = 500;
     /** Number of backtrack attempts when encountering a dead-end. */
-    static constexpr int BACKTRACK_ATTEMPTS = 10;
+    static constexpr int BACKTRACK_ATTEMPTS = 30;
     /** If difference between maximum and minimum path length is greater than
      *  this threshold,, all paths go into same group. */
-    static constexpr long LEN_THRESHOLD = 10000000000ul;
+    static constexpr long LEN_THRESHOLD = 1000000000ul;
     /** Faster and simpler metric for length. */
-    static constexpr long NODE_NUM_THRESHOLD = 500;
+    static constexpr long NODE_NUM_THRESHOLD = 50;
     /** Window size in path length. */
     static constexpr ulong WINDOW_SIZE = 1000ul;
     /** Valley and peak ratio needed for splitting the paths into groups

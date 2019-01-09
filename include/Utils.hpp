@@ -31,17 +31,36 @@ namespace Utils {
     }
 
     enum class Metrics {
-        EXTENSION_SCORE, OVERLAP_SCORE
+        EXTENSION_SCORE, OVERLAP_SCORE, EXTENSION_SCORE_SQRT, OVERLAP_SCORE_SQRT
     };
 
     static float getMetric(const OverlapGraph::Edge &e, const Utils::Metrics &metric) {
         switch (metric) {
             case Utils::Metrics::EXTENSION_SCORE:
                 return e.extension_score;
+            case Utils::Metrics::EXTENSION_SCORE_SQRT:
+                return std::sqrt(e.extension_score);
             case Utils::Metrics::OVERLAP_SCORE:
                 return e.overlap_score;
+            case Utils::Metrics::OVERLAP_SCORE_SQRT:
+                return std::sqrt(e.overlap_score);
             default:
                 return 0.0f;
+        }
+    }
+
+    static char* getMetricName(const Utils::Metrics &metric){
+        switch (metric) {
+            case Utils::Metrics::EXTENSION_SCORE:
+                return const_cast<char *>("EXTENSION_SCORE");
+            case Utils::Metrics::EXTENSION_SCORE_SQRT:
+                return const_cast<char *>("EXTENSION_SCORE_SQRT");
+            case Utils::Metrics::OVERLAP_SCORE:
+                return const_cast<char *>("OVERLAP_SCORE");
+            case Utils::Metrics::OVERLAP_SCORE_SQRT:
+                return const_cast<char *>("OVERLAP_SCORE_SQRT");
+            default:
+                return const_cast<char *>("");
         }
     }
 }

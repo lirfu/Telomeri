@@ -9,7 +9,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
     std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(0., 1.);
 
-    std::cout << "> Monte Carlo heuristic" << std::endl;
+    std::cout << "> Monte Carlo heuristic: " << Utils::getMetricName(metric) << std::endl;
     ulong found = 0;
 
     // For each anchor-node as starting point.
@@ -19,7 +19,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
             continue;
         }
 
-        std::cout << "---> Building from node n" << start_node.index << std::endl;
+//        std::cout << "---> Building from node n" << start_node.index << std::endl;
 
         // Repeat path building from this starting point.
         for (int r = 0; r < REBUILD_ATTEMPTS; r++) {
@@ -28,8 +28,8 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
             std::vector<bool> visited_nodes(g.nodes_.size(), false);
             visited_nodes[n->index] = true;
 
-            std::cout << "...... Run " << (r + 1) << '/' << REBUILD_ATTEMPTS
-                      << "  (" << found << " found)" << std::endl;
+//            std::cout << "...... Run " << (r + 1) << '/' << REBUILD_ATTEMPTS
+//                      << "  (" << found << " found)" << std::endl;
 
             // Store the starting node.
             p.nodes_.push_back(n);
@@ -159,11 +159,17 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
     }
 
     std::cout << "Found " << found << " paths." << std::endl;
+#ifdef DEBUG
+    filterUnique();
+    std::cout << "Total new: " << (paths_.size() - orig_size) << std::endl;
+#endif
 }
 
 void PathManager::buildDeterministic(const OverlapGraph &g,
                                      const Utils::Metrics &metric) {
     const size_t num_nodes = g.nodes_.size();
+    ulong found = 0;
+    std::cout << "> Deterministic heuristic: " << Utils::getMetricName(metric) << std::endl;
 #ifdef DEBUG
     int outer = 0;
     int num_anchors = 0;
@@ -209,6 +215,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 path.updateLength();
                 path.nodes_.push_back(node);
                 paths_.push_back(path);
+                ++found;
                 break;
             }
 
@@ -321,9 +328,11 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
             if (all_ok) {
                 path.updateLength();
                 paths_.push_back(path);
+                ++found;
             }
         }
     }
+    std::cout << "Found " << found << " paths." << std::endl;
 }
 
 void PathManager::filterUnique() {
