@@ -230,6 +230,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
             // ...and so on
             // This is used to go back a step when dead end is encountered.
             int skip_n_best = 0;
+            bool went_back = false;
 
             // Construct the path
             while (true) {
@@ -240,9 +241,16 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                         all_ok = false;
                         break;
                     } else {
+                        // we will only go back a step once
+                        if (went_back) {
+                            all_ok = false;
+                            break;
+                        }
+                        went_back = true;
+
                         // Go back a step
                         step_index -= 1;
-                        skip_n_best += 1;
+                        step_index += 1;
                         node = path.nodes_.back();
                         visited_nodes[node->index] = false;
                         path.nodes_.pop_back();
@@ -258,6 +266,14 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                         all_ok = false;
                         break;
                     }
+
+                    // we will only go back a step once
+                    if (went_back) {
+                        all_ok = false;
+                        break;
+                    }
+                    went_back = true;
+
                     step_index -= 1;
                     skip_n_best += 1;
                     node = path.nodes_.back();
@@ -280,8 +296,9 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 // Find edge by skipping n best
                 bool edge_found = false;
                 const OverlapGraph::Edge *edge = nullptr;
-                while (skip_n_best < node->edges.size() - 1) {
-                    edge = &sorted_edges[skip_n_best];
+                int this_step_skips = skip_n_best;
+                while (this_step_skips < node->edges.size() - 1) {
+                    edge = &sorted_edges[this_step_skips];
                     // Get next node
                     const OverlapGraph::Node* nn = &g.nodes_[
                             (node->index == edge->t_index) ? edge->q_index : edge->t_index
@@ -292,7 +309,8 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                         edge_found = true;
                         break;
                     } else {
-                        skip_n_best += 1;
+                        // skip to next edge in this step
+                        this_step_skips += 1;
                     }
                 }
 
@@ -303,6 +321,14 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                         all_ok = false;
                         break;
                     }
+
+                    // we will only go back a step once
+                    if (went_back) {
+                        all_ok = false;
+                        break;
+                    }
+                    went_back = true;
+
                     step_index -= 1;
                     skip_n_best += 1;
                     node = path.nodes_.back();
