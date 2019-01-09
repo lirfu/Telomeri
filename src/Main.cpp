@@ -164,22 +164,29 @@ int main(int argc, char **argv) {
     pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
     pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE);
     pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
-    pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE);
-    pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
-    pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE);
-    pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
+    //pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE);
+    //pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
+    //pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE);
+    //pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
 
     // Filter uniques.
     pm.filterUnique();
-
     std::cout << "Done (" << timer.lap() << "s)" << std::endl << pm.stats() << std::endl;
 
+    // Construct groups.
     std::cout << "Constructing groups..." << std::endl;
     std::vector<PathGroup> pgs = pm.constructGroups();
     for (size_t i = 0; i < pgs.size(); i++) {
-        std::cout << "-- Group " << i << " --\n" << pgs[i] << "\n-------------\n\n";
+        std::cout << "-- Group " << i << " lengths --\n" << pgs[i] << "\n-------------------\n\n";
     }
-    std::cout << "Done (" << timer.lap() << "s)" << std::endl;
+    std::cout << "Done (" << timer.lap() << "s)\n" << std::endl;
+
+    // Discard infrequent paths in each group.
+    std::cout << "Discarding infrequent paths in each group..." << std::endl;
+    for (PathGroup& pg : pgs) {
+        pg.discardNotFrequent();
+    }
+    std::cout << "Done (" << timer.lap() << "s)\n" << std::endl;
 
     // TODO Re-group based on current group scores (this may be misinterpreted).
     // SomeOtherFunc f1;

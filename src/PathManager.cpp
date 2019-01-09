@@ -1,6 +1,7 @@
 #include <PathManager.hpp>
 
 #include <iostream>
+#include <iomanip>
 #include <bitset>
 #include <random>
 
@@ -363,7 +364,23 @@ std::string PathManager::stats() {
 
 std::tuple<ulong, ulong, ulong> PathManager::getMinMaxSumPathLength() {
     ulong min_len = ULONG_MAX, max_len = 0, sum_len = 0;
-    for (const Path &p : paths_) {
+
+#ifdef DEBUG
+    size_t neg = 0, pos = 0;
+#endif
+
+    for (const Path &p : paths_) { // Iterate over all paths.
+
+#ifdef DEBUG
+        if (p.length() < 0) {
+            std::cout << "NEG: " << p.length() << std::endl;
+            neg++;
+        } else {
+            std::cout << "POSITIVE: " << p.length() << std::endl;
+            pos++;
+        }
+#endif
+
         ulong l = p.length();
         sum_len += l;
         if (min_len > l) {
@@ -373,6 +390,12 @@ std::tuple<ulong, ulong, ulong> PathManager::getMinMaxSumPathLength() {
             max_len = l;
         }
     }
+
+#ifdef DEBUG
+        std::cout << "Number of negative path lengths: " << neg << '\n'
+                  << "Number of positive path lengths: " << pos << std::endl;
+#endif
+
     return std::tuple<ulong, ulong, ulong>(min_len, max_len, sum_len);
 }
 
@@ -414,20 +437,28 @@ std::vector<PathGroup> PathManager::constructGroups() {
                 pws.pop_back();                        // Remove empty window.
             }
         }
-//#ifdef DEBUG
-        //std::cout << "Created " << pws.size() << " non-empty path windows.\n";
-        //for (size_t i = 0, n = pws.size(); i < n; i++) {
-            //std::cout << "  window " << i << " [" << pws[i].getLowerBound()
-            //  << ',' << pws[i].getUpperBound() << "]: " << pws[i] << '\n';
-        //}
-//#endif
+#ifdef DEBUG
+        std::cout << "Created " << pws.size() << " non-empty path windows.\n"
+              << " [(Path length with lowest FQ, FQ), (Path length with highest FQ, FQ)]"
+              << " => Lengths of paths inside the window\n";
+        for (size_t i = 0, n = pws.size(); i < n; i++) {
+            std::cout << "  window " << std::setw(2) << i << " [("
+              << std::setw(6) << pws[i].getLowestFrequencyEntry().first << ','
+              << std::setw(1) << pws[i].getLowestFrequencyEntry().second << ") ("
+              << std::setw(6) << pws[i].getHighestFrequencyEntry().first << ','
+              << std::setw(1) << pws[i].getHighestFrequencyEntry().second << ")] "
+              << " => " << pws[i] << '\n';
+        }
+#endif
 
         // Get path lengths that divide all paths into groups.
         std::vector<ulong> bs = getBorderPathLengths(pws, RATIO_THRESHOLD);
 #ifdef DEBUG
-        std::cout << "Dividing path lengths: ";
-        for_each(bs.begin(), bs.end(), [] (ulong el) {std::cout << el << ' ';});
-        std::cout << std::endl << std::endl;
+        if (bs.size()) {
+            std::cout << "Dividing path lengths: ";
+            for_each(bs.begin(), bs.end(), [] (ulong el) {std::cout << el << ' ';});
+            std::cout << std::endl << std::endl;
+        } else std::cout << "No dividing path lengths found!\n" << std::endl;
 #endif
         if (bs.empty()) { // No dividing path lengths has been found.
             // Insert all elements from 'v' into first (and only) group.

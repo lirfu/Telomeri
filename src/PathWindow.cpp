@@ -40,7 +40,7 @@ std::pair<ulong, int> PathWindow::getHighestFrequencyEntry() const {
  
 std::ostream& operator<< (std::ostream& s, const PathWindow& pw) {
     for (const auto pp : pw.piw_) {
-        s << *pp << '[' << pp->length() << ']' << ' ';
+        s << '[' << pp->length() << ']' << ' ';
     }
     return s;
 }
