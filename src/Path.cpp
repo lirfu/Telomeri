@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include <cmath> // FIXME remove me!
 
 void Path::updateLength() {
     if (nodes_.empty()) {
@@ -16,9 +15,11 @@ void Path::updateLength() {
     }
 }
 
+
 long Path::length() const {
     return length_;
 }
+
 
 std::ostream &operator<<(std::ostream &s, const Path &p) {
     bool e = false;
@@ -40,6 +41,7 @@ std::ostream &operator<<(std::ostream &s, const Path &p) {
     }
     return s;
 }
+
 
 bool Path::operator==(const Path &other) const {
     return nodes_.size() == other.nodes_.size()

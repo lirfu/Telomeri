@@ -22,42 +22,34 @@
 }
 
 std::ostream& operator<< (std::ostream& s, const PathGroup& pg) {
-    int i = 0;
+    int i = 0; 
+    s << '\t';
     for (const auto pp : pg.pig_) {
         s << '[' << pp->length() << ']' << ' ';
         if (++i % 5 == 0) { // Print out new line every now and then.
-            s << '\n'; 
+            s << '\n' << '\t'; 
         }
     }
     return s;
 }
 
 
-static void deleteAtIndices(std::vector<const Path*>& data,
-        const std::vector<int>& deleteIndices);
 
 void PathGroup::discardNotFrequent() {
     int highest_plf = getHighestFrequencyEntry().second;
     int threshold_plf = highest_plf / 2; // If path has frequency less than this, erase it.
     if (threshold_plf == 0) return; // Speed return since no paths will be removed.
 
-    std::vector<int> deleteIndices; // Indices of paths that should be removed from group.
     for (int i = 0, n = static_cast<int>(pig_.size()); i < n; i++) { // Iterate over paths.
         ulong path_length = pig_[i]->length(); // Get path length for current path.
         int plf = frqs[path_length]; // Get path length frequency of length of current path.
 
         if (plf < threshold_plf) { // Path length frequency is lower than threshold.
-            deleteIndices.push_back(i); // Remember wich path to remove from group.
             frqs.erase(path_length); // Remove this path length from the map (if exists).
         }
     }
 
-#ifdef DEBUG
-    std::cout << "Threshold path length frequency: " << threshold_plf <<
-        "\n  Removing " << deleteIndices.size() << " path from group." << std::endl;
-#endif
-
-    deleteAtIndices(pig_, deleteIndices); // Delete paths at found indices.
+    deletePathsBelowThreshold(); // Delete paths below threshold from the pig_ vector.
 }
 
 
@@ -97,23 +89,16 @@ std::pair<ulong, int> PathGroup::getHighestFrequencyEntry() const {
 }
 
 
-/** Deletes path ponters in the provided data vector at the indices provided
- * in the deleteIndices vector. */
-static void deleteAtIndices(std::vector<const Path*>& data,
-        const std::vector<int>& deleteIndices)
+void PathGroup::deletePathsBelowThreshold()
 {
-    std::vector<bool> markedElements(data.size(), false);
-    std::vector<const Path*> tempBuffer;
-    tempBuffer.reserve(data.size()-deleteIndices.size());
+    std::vector<const Path*> saved_paths; // Not deleted paths (saved paths).
+    saved_paths.reserve(pig_.size());     // Reserve space for all paths.
 
-    for (std::vector<int>::const_iterator itDel = deleteIndices.begin();
-            itDel != deleteIndices.end();
-            itDel++) {
-        markedElements[*itDel] = true;
+    for (const Path* pp : pig_) {            // Iterate over paths in group.
+        if (frqs.count(pp->length()) != 0) { // Paths path length is still present in map.
+            saved_paths.push_back(pp);       // Keep the path (higer plf than threshold).
+        }
     }
 
-    for (size_t i=0; i<data.size(); i++) {
-        if (!markedElements[i]) tempBuffer.push_back(data[i]);
-    }
-    data = tempBuffer;
+    pig_ = saved_paths; // Remember only saved paths.
 }

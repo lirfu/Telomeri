@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <bitset>
 #include <random>
+#include <set>
 
 #include <PathWindow.hpp>
 
@@ -541,6 +542,11 @@ std::vector<ulong> getBorderPathLengths(const std::vector<PathWindow>& pws,
             dividing_path_lengths.push_back(valley_pair.first);
         }
     }
+
+    // Return only unique path lengths (eliminate edge cases where).
+    std::set<ulong> s(dividing_path_lengths.begin(), dividing_path_lengths.end() );
+    dividing_path_lengths.assign(s.begin(), s.end() ); 
+
     return dividing_path_lengths;
 }
 

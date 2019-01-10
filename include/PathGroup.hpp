@@ -35,6 +35,12 @@ private:
      * in the frqs map. */
     std::pair<ulong, int> getHighestFrequencyEntry() const;
 
+
+    /** Removes paths that have path length frequency below provided threshold
+     * from the pig_ vector. In other words, these paths have their lengths
+     * removed from the frqs map. */
+    void deletePathsBelowThreshold();
+
     friend std::ostream& operator<< (std::ostream& s, const PathGroup& pg);
 
 private:
