@@ -12,10 +12,8 @@ void Path::updateLength() {
 
     length_ = nodes_[0]->length;
     for (uint i = 1; i < edges_.size(); i++) {
-        length_ += nodes_[i]->length - (long) edges_[i - 1]->q_end
-                   - (nodes_[i - 1]->length - (long) edges_[i - 1]->t_end);
+        length_ += edges_[i - 1]->q_start - (long) edges_[i - 1]->t_start;
     }
-    length_ = std::abs(length_); // FIXME REMOVE ME!
 }
 
 long Path::length() const {

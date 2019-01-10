@@ -230,7 +230,7 @@ void OverlapGraph::buildFrom(
     // TODO This shouldn't give negative values (or should it?).
     float ES = std::abs(OS + query_EL / 2.0f - (query_OH + target_OH) / 2.0f);
 
-    edges_.emplace_back(
+    Edge e(
             qn_index, // Index of first node of the edge.
             tn_index, // Index of second node of the edge.
             overlap.query_start,
@@ -238,9 +238,14 @@ void OverlapGraph::buildFrom(
             overlap.target_start,
             overlap.target_end,
             OS, SI, ES);
+    edges_.push_back(e);
 
-    nodes_[qn_index].edges.push_back(edges_[edges_.size() - 1]);
-    nodes_[tn_index].edges.push_back(edges_[edges_.size() - 1]);
+    nodes_[tn_index].edges.push_back(e);
+
+    std::swap(e.q_index, e.t_index);
+    std::swap(e.q_start, e.t_start);
+    std::swap(e.q_end, e.t_end);
+    nodes_[qn_index].edges.push_back(e);
 }
 
 long OverlapGraph::nodeIndex(const std::string &name) const {

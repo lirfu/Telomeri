@@ -49,7 +49,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 const OverlapGraph::Edge *anchor_edge = nullptr;
                 std::vector<const OverlapGraph::Edge *> appropriate_edges;
                 for (const OverlapGraph::Edge &e : n->edges) {
-                    const OverlapGraph::Node *q_n = &(g.nodes_[e.q_index==n->index ? e.t_index : e.q_index]);
+                    const OverlapGraph::Node *q_n = &(g.nodes_[e.q_index]);
 
                     // If edge leads to anchor different from starting one, force select it.
                     if (q_n->anchor && q_n->index != start_node.index) {
@@ -117,7 +117,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 }
 
                 // Replace current node with next node.
-                n = &(g.nodes_[edge->q_index==n->index ? edge->t_index : edge->q_index]);
+                n = &(g.nodes_[edge->q_index]);
 
                 // Add the selected edge and next node to path.
                 p.nodes_.push_back(n);
