@@ -208,9 +208,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
             path.nodes_.push_back(&start_node);
             path.edges_.push_back(&first_edge);
             // Get second node from which the path will be build
-            const OverlapGraph::Node *node = &g.nodes_[
-                    (start_node.index == first_edge.t_index) ? first_edge.q_index : first_edge.t_index
-            ];
+            const OverlapGraph::Node *node = &g.nodes_[first_edge.q_index];
 
 
             // If second node was already an anchor, the path of length 2 is built
@@ -301,9 +299,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 while (this_step_skips < node->edges.size() - 1) {
                     edge = &sorted_edges[this_step_skips];
                     // Get next node
-                    const OverlapGraph::Node* nn = &g.nodes_[
-                            (node->index == edge->t_index) ? edge->q_index : edge->t_index
-                    ];
+                    const OverlapGraph::Node* nn = &g.nodes_[edge->q_index];
 
                     // Node was not visited yet, break the loop
                     if (!visited_nodes[nn->index]) {
@@ -341,7 +337,12 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
 
                 // Finally, the edge was found
                 // Go to next node
-                node = &g.nodes_[(node->index == edge->t_index) ? edge->q_index : edge->t_index];
+                node = &g.nodes_[edge->q_index];
+#ifdef DEBUG
+                if (visited_nodes[node->index]) {
+                    std::cout << "WARNING: duplicate node inserted!";
+                }
+#endif
                 visited_nodes[node->index] = true;
                 path.edges_.push_back(edge);
                 path.nodes_.push_back(node);
