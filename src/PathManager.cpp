@@ -210,11 +210,11 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
             // Get second node from which the path will be build
             const OverlapGraph::Node *node = &g.nodes_[first_edge.q_index];
 
-
+            visited_nodes[node->index] = true;
+            path.nodes_.push_back(node);
             // If second node was already an anchor, the path of length 2 is built
             if (node->anchor) {
                 path.updateLength();
-                path.nodes_.push_back(node);
                 paths_.push_back(path);
                 ++found;
                 break;
@@ -249,15 +249,14 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
 
                         // Go back a step
                         step_index -= 1;
-                        step_index += 1;
-                        node = path.nodes_.back();
-                        visited_nodes[node->index] = false;
+                        skip_n_best += 1;
                         path.nodes_.pop_back();
                         path.edges_.pop_back();
+                        node = path.nodes_.back();
+                        visited_nodes[node->index] = false;
                         continue;
                     }
                 }
-
                 // If we need to skip all edges, then this is a dead end, go back a step
                 if (skip_n_best >= node->edges.size() - 1) {
                     if (step_index == 0) {
@@ -275,10 +274,10 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
 
                     step_index -= 1;
                     skip_n_best += 1;
-                    node = path.nodes_.back();
-                    visited_nodes[node->index] = false;
                     path.nodes_.pop_back();
                     path.edges_.pop_back();
+                    node = path.nodes_.back();
+                    visited_nodes[node->index] = false;
                     continue;
                 }
 
@@ -328,25 +327,37 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
 
                     step_index -= 1;
                     skip_n_best += 1;
-                    node = path.nodes_.back();
-                    visited_nodes[node->index] = false;
                     path.nodes_.pop_back();
                     path.edges_.pop_back();
+                    node = path.nodes_.back();
+                    visited_nodes[node->index] = false;
                     continue;
                 }
 
                 // Finally, the edge was found
+                bool pushed = false;
+                for (const OverlapGraph::Edge& n_edge: node->edges) {
+                    if (n_edge.q_index == edge->q_index && n_edge.t_index == edge->t_index) {
+                        path.edges_.push_back(&n_edge);
+                        pushed = true;
+                        break;
+                    }
+                }
+
+                if (!pushed) {
+                    std::cout << "ERROR: no edge found!" << std::endl;
+                    return;
+                }
+
                 // Go to next node
+                visited_nodes[node->index] = true;
                 node = &g.nodes_[edge->q_index];
+                path.nodes_.push_back(node);
 #ifdef DEBUG
                 if (visited_nodes[node->index]) {
                     std::cout << "WARNING: duplicate node inserted!";
                 }
 #endif
-                visited_nodes[node->index] = true;
-                path.edges_.push_back(edge);
-                path.nodes_.push_back(node);
-
                 // If target node is anchor, add the node and break.
                 if (node->anchor) {
                     break;
@@ -363,6 +374,48 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
         }
     }
     std::cout << "Found " << found << " paths." << std::endl;
+#ifdef DEBUG
+    std::cout << "Validating paths" << std::endl;
+
+    for (const Path &p : paths_) {
+        size_t num_nodes = p.nodes_.size();
+        size_t num_edges = p.edges_.size();
+
+        std::vector<bool> duplicates(g.nodes_.size(), false);
+
+        if (num_nodes != (num_edges + 1)) {
+            std::cout <<  "invalid num_nodes: " << num_nodes << ", num_edges: " << num_edges << std::endl;
+        }
+
+        for (int i = 0, j = 0; i < num_nodes && j < num_edges; i++, j++) {
+            if (duplicates[p.nodes_[i]->index]) {
+                std::cout << "found duplicate!" << std::endl;
+            }
+
+            duplicates[p.nodes_[i]->index] = true;
+
+            if (p.nodes_[i]->index != p.edges_[j]->t_index) {
+                std::cout <<  "t_index is invalid, i=" << i << std::endl;
+            }
+
+            if (i + 1 < num_nodes) {
+                if(p.nodes_[i + 1]->index != p.edges_[j]->q_index) {
+                    std::cout <<  "q_index is invalid, i=" << i  << std::endl;
+                }
+            }
+            if (i == 0) {
+                if(!(p.nodes_[i]->anchor)) {
+                    std::cout <<  "start anchor is invalid" << std::endl;
+                }
+            }
+            if (i == num_nodes - 1) {
+                if(!(p.nodes_[i + 1]->anchor)) {
+                    std::cout <<  "end anchor is invalid" << std::endl;
+                }
+            }
+        }
+    }
+#endif
 }
 
 void PathManager::filterUnique() {
