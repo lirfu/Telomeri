@@ -3,10 +3,11 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <stdexcept>
 
  PathGroup::PathGroup(std::vector<const Path*>::const_iterator begin,
         std::vector<const Path*>::const_iterator end)
-        : pig_(begin, end), consensus(nullptr)
+        : pig_(begin, end), consensus(nullptr), valid_path_number(0)
 {
     /* NOTE: This could be double work if group is made after path windows
      * are build since windows already contain frqs map for paths that are
@@ -20,6 +21,7 @@
                 1 : frqs[path_p->length()] + 1;
     }
 }
+
 
 std::ostream& operator<< (std::ostream& s, const PathGroup& pg) {
     int i = 0; 
@@ -38,13 +40,13 @@ std::ostream& operator<< (std::ostream& s, const PathGroup& pg) {
 void PathGroup::discardNotFrequent() {
     int highest_plf = getHighestFrequencyEntry().second;
     int threshold_plf = highest_plf / 2; // If path has frequency less than this, erase it.
-    if (threshold_plf == 0) return; // Speed return since no paths will be removed.
+    if (threshold_plf == 0) return;      // Speed return since no paths will be removed.
 
     for (int i = 0, n = static_cast<int>(pig_.size()); i < n; i++) { // Iterate over paths.
         ulong path_length = pig_[i]->length(); // Get path length for current path.
         int plf = frqs[path_length]; // Get path length frequency of length of current path.
 
-        if (plf < threshold_plf) { // Path length frequency is lower than threshold.
+        if (plf < threshold_plf) {   // Path length frequency is lower than threshold.
             frqs.erase(path_length); // Remove this path length from the map (if exists).
         }
     }
@@ -69,6 +71,20 @@ void PathGroup::calculateConsensusPath() {
     for (const auto pp : pig_) if (pp->length() >= avg) consensus = pp;
 
     consensus = pig_.back(); // Return last element if none was found before.
+}
+
+
+
+void PathGroup::calculateValidPathNumber() {
+    valid_path_number = 0;
+    if (!consensus) return; // No consesus sequence found for the group.
+    
+    // Count number of paths equal to group consensus.
+    for (const Path* pp : pig_) {
+        if (*consensus == *pp){
+            valid_path_number++;
+        }
+    } 
 }
 
 

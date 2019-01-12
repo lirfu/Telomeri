@@ -172,10 +172,10 @@ int main(int argc, char **argv) {
     pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
     pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE);
     pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
-    pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE);
-    pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
-    pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE);
-    pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
+    //pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE);
+    //pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
+    //pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE);
+    //pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
 
     // Filter uniques.
     pm.filterUnique();
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
         groups_for_anchors[{&anchor1, &anchor2}] = pgs; // Store all groups for the anchor in the map of path groups.
     }
 
-    // Find a consenus for each group for each pair of anchors.
+    // Find a consensus for each pair of anchors.
     std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
             const Path*> consensus_for_anchors;
 
@@ -215,17 +215,58 @@ int main(int argc, char **argv) {
         std::cout << "====> Finding consensus path in each group between anchor '" << anchor1.name
             << "' and anchor '" << anchor2.name << "'..." << std::endl;
         std::vector<PathGroup>& pgs = anchors_groups_pair.second;
-        for (PathGroup& pg : pgs) {  // Iterate over path groups.
-            pg.discardNotFrequent(); // Discard infrequent paths in each group.
-            pg.calculateConsensusPath(); // Calculate consensus path for this group and set it in pg object.
+        
+        std::vector<PathGroup*> pgswc;     // Path groups with consensus (not all have it). Filled in the following for loop.
+        for (PathGroup& pg : pgs) {        // Iterate over path groups.
+            pg.discardNotFrequent();       // Discard infrequent paths in each group.
+            pg.calculateConsensusPath();   // Calculate consensus path for this group and set it in pg object.
+            pg.calculateValidPathNumber(); // Count number of paths equal to group consensus.
 
-            if (pg.consensus) std::cout << "Consensus length: " << pg.consensus->length() << std::endl;
-            else std::cout << "No consensus sequence for group:\n" << pg << std::endl;
+            if (pg.consensus) { // Group has consensus.
+                std::cout << "Consensus length: "  << pg.consensus->length() << "    "
+                          << "Valid path number: " << pg.valid_path_number   << std::endl;
+                pgswc.push_back(&pg);
+            } else {              // Consensus could not be calculated for the group.
+                std::cout << "No consensus sequence for group:\n" << pg << std::endl;
+            }
         }
-        std::cout << "<==== Done finding consensus path in each group between anchor '" << anchor1.name
-            << "' and anchor '" << anchor2.name << "'!" << std::endl;
+        std::cout << "Done finding consensus path in each group.\n";
+        
+        // Calculate consensus among groups for this pair of anchors (final sequence connecting the anchors).
+        if (pgswc.empty()) { // No consensus between anchors.
+            consensus_for_anchors[{&anchor1, &anchor2}] = nullptr;
+        } else if (pgswc.size() == 1) { // Only one group between this pair of anchors has consensus.
+            consensus_for_anchors[{&anchor1, &anchor2}] = pgswc[0]->consensus;
+        } else {
+            // Sort path groups by consensus length in descending order.
+            std::sort(pgswc.begin(), pgswc.end(),
+                    [](const PathGroup* pgp1, const PathGroup* pgp2) {
+                        return pgp1->consensus->length() > pgp2->consensus->length(); 
+                    });
+            if (pgswc.size() == 2) { // Only two groups with consensus between this pair of anchors.
+                // Use longer path length as consensus for this region.
+                consensus_for_anchors[{&anchor1, &anchor2}] = pgswc[0]->consensus; 
+            } else { // There are more than two path groups with calculated consensus.
+                // Go over consecutive group pairs and compare those groups by consensus length.
+                const PathGroup* longer = pgswc[0]; // Group with longer consensus. Initially, group with longest consensus.
+                for (size_t i = 1, n = pgswc.size(); i < n; i++) { // Go over consecutive pairs of path groups.
+                    const PathGroup* shorter = pgswc[i]; // Path group with shorter consensus (out of two).
 
-        // TODO: Among all groups for one anchor pair, calculate a single consensus sequence between those two anchors.
+                    // Check if valid path number in the longer group is less or equal to half of the number in the shorter group.
+                    if (2 * longer->valid_path_number <= shorter->valid_path_number) {
+                        longer = shorter; // Shorter is the winner of this comparison and goes into the next round.
+                    }
+                }
+                consensus_for_anchors[{&anchor1, &anchor2}] = longer->consensus; 
+            }
+        }
+
+        // Log the final consensus lenght to the standard output.
+        const Path* consensus = consensus_for_anchors.at({&anchor1, &anchor2}); // Final consensus.
+        if (consensus) std::cout << "Final consensus (consensus among groups) length: " << consensus->length() << '\n';
+        else           std::cout << "Final consensus not found!\n";
+        std::cout << "====> Done finding consensus between anchor '" << anchor1.name
+            << "' and anchor '" << anchor2.name << "'!" << std::endl;
     }
 
 

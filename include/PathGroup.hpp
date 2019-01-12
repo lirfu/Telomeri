@@ -9,7 +9,8 @@ class PathGroup {
 public:
     std::vector<const Path*> pig_; //< Pointers to paths in group (sorted).
     std::map<ulong, int> frqs; //< Path length frequencies of paths in group.
-    const Path* consensus;
+    const Path* consensus; //< Group consensus sequence.
+    int valid_path_number; //< Number of paths in group equal to consensus.
 public:
     /** Constructs a path group with path pointers defined with provided
      * iterators.
@@ -25,6 +26,10 @@ public:
     /** Calculates consensus path among all paths in the group. Sets sequence
      * of the group if consensus can be made, nullptr otherwise. */
     void calculateConsensusPath();
+    
+    /** Calculates value path number of the group. Counts number of paths in the
+     * pig_ vector matching the consensus sequence. */
+    void calculateValidPathNumber();
     
 private:
     /** Returns a <PathLength, Frequency> pair for which has lowest frequency in
