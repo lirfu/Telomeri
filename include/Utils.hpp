@@ -31,6 +31,15 @@ namespace Utils {
         return std::find(v.begin(), v.end(), e) != v.end();
     }
 
+    static bool fileExtensionMatches(const std::string &filepath, const std::string &extension) {
+        for (ulong i = 0; i < extension.length(); i++) {
+            if (filepath[filepath.back() - i] != extension[extension.back() - i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     enum class Metrics {
         EXTENSION_SCORE, OVERLAP_SCORE, EXTENSION_SCORE_SQRT, OVERLAP_SCORE_SQRT
     };
@@ -50,7 +59,7 @@ namespace Utils {
         }
     }
 
-    static char* getMetricName(const Utils::Metrics &metric){
+    static char *getMetricName(const Utils::Metrics &metric) {
         switch (metric) {
             case Utils::Metrics::EXTENSION_SCORE:
                 return const_cast<char *>("EXTENSION_SCORE");

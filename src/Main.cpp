@@ -2,6 +2,14 @@
 
 #include <PathManager.hpp>
 #include <Stopwatch.hpp>
+#include <Scaffolder.hpp>
+
+#define READS_FILE "reads"
+#define CONTIGS_FILE "contigs"
+#define RR_OVERLAP_FILE "rr_overlap.paf"
+#define CR_OVERLAP_FILE "cr_overlap.paf"
+#define RESULT_FILE "hera_result.fasta"
+
 
 enum ParseState {
     NONE, OLL, OLP, OHL, OHP
@@ -151,7 +159,7 @@ int main(int argc, char **argv) {
     // FIXME Just for testing.
     graph.test_load_num_ = 100000;
 
-    std::cout << "\nLoading files..." << std::endl;
+    std::cout << "\nLoading overlaps..." << std::endl;
     if (!graph.load(rr_file, false) || !graph.load(cr_file, true)) {
         return 1;
     }
@@ -190,13 +198,13 @@ int main(int argc, char **argv) {
         std::vector<PathGroup> pgs = PathManager::constructGroups(paths);
         for (size_t i = 0; i < pgs.size(); i++) {
             std::cout << "-- Group " << i << " lengths --\n" << pgs[i] << "\n---------------------\n";
-        }   
+        }
         std::cout << "<==== Finished constructing groups for paths between anchor '"
             << anchor1.name << "' and anchor '" << anchor2.name << "'!\n" << std::endl;
 
         groups_for_anchors[{&anchor1, &anchor2}] = pgs; // Store all groups for the anchor in the map of path groups.
     }
-    
+
     // Find a consenus for each group for each pair of anchors.
     std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
             const Path*> consensus_for_anchors;
@@ -213,7 +221,7 @@ int main(int argc, char **argv) {
 
             if (pg.consensus) std::cout << "Consensus length: " << pg.consensus->length() << std::endl;
             else std::cout << "No consensus sequence for group:\n" << pg << std::endl;
-        }   
+        }
         std::cout << "<==== Done finding consensus path in each group between anchor '" << anchor1.name
             << "' and anchor '" << anchor2.name << "'!" << std::endl;
 
@@ -229,15 +237,24 @@ int main(int argc, char **argv) {
     // pm.filterRare();
 
     // TODO Construct consensus paths.
-    // std::cout << "Building the scaffold..." << std::endl;
-    // PathBuilder::Path consensus = pm.constructConsensusPath();
-
-    // TODO Construct final result/scaffold (may need to load original files after all, but only here).
-    // char *scaffold = Utils::buildScaffold(consensus, reads_file, contigs_file);
-
-    // TODO Write result to a file.
-    // std::cout << "Writing result to: " << output_file << std::endl;
-    // Utils::write(scaffold, output_file);
+//    std::cout << "Building the scaffold..." << std::endl;
+//    Path scaffold;
+//    consensus = pm.constructConsensusPath();
+//
+//    // Load sequences for the final scaffold.
+//    std::cout << "\nLoading files for scaffolding..." << std::endl;
+//    Scaffolder scaff(scaffold);
+//    if (!scaff.load(rr_file) || !scaff.load(cr_file)) {
+//        return 1;
+//    }
+//    std::cout << "Done (" << timer.lap() << "s)" << std::endl << graph.stats() << std::endl;
+//
+//    // Write result to a file.
+//     std::cout << "Writing result to: " << RESULT_FILE << std::endl;
+//     if(!scaff.write(RESULT_FILE)) {
+//         return 1;
+//     }
+//     std::cout << "Done (" << timer.lap() << "s)" << std::endl;
 
     std::cout << "Total time: " << timer.stop() << "s" << std::endl;
     return 0;
