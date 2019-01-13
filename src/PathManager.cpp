@@ -25,7 +25,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
 //        std::cout << "---> Building from node n" << start_node.index << std::endl;
 
         // Repeat path building from this starting point.
-        for (int r = 0; r < REBUILD_ATTEMPTS; r++) {
+        for (int r = 0; r < params_.rebuild_attempts; r++) {
             const OverlapGraph::Node *n = &start_node;
             Path p;
             std::vector<bool> visited_nodes(g.nodes_.size(), false);
@@ -72,7 +72,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
 #ifdef DEBUG
                     std::cout << "No edges available for: \t" << p << std::endl;
 #endif
-                    if (backtracks < BACKTRACK_ATTEMPTS && p.edges_.size() > 1) {  // Backtrack possible.
+                    if (backtracks < params_.backtrack_attempts && p.edges_.size() > 1) {  // Backtrack possible.
                         bool t = false;
                         do {
                             p.nodes_.pop_back();
@@ -132,7 +132,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 }
 
                 // Abort if length is too large.
-                if (p.nodes_.size() >= NODE_NUM_THRESHOLD) {
+                if (p.nodes_.size() >= params_.node_num_threshold) {
 #ifdef DEBUG
                     std::cout << "Length too large (" << p.nodes_.size() << "): " << p << std::endl;
 #endif
@@ -485,7 +485,7 @@ std::tuple<ulong, ulong, ulong> PathManager::getMinMaxSumPathLength() {
 std::vector<ulong> getBorderPathLengths(const std::vector<PathWindow>& pws,
         float ratio_threshold);
 
-std::vector<PathGroup> PathManager::constructGroups(std::vector<const Path*>& v) {
+std::vector<PathGroup> PathManager::constructGroups(std::vector<const Path*>& v, PathManager::Parameters params) {
     // Get min and max path lengths.
     std::pair<ulong, ulong> mm = getMinMaxPathLength(v);
     ulong min_len = mm.first;
@@ -499,15 +499,15 @@ std::vector<PathGroup> PathManager::constructGroups(std::vector<const Path*>& v)
 
     // Create path groups.
     std::vector<PathGroup> pgs;
-    if (max_len - min_len < LEN_THRESHOLD) { // If all paths go in one group.
+    if (max_len - min_len < params.len_threshold) { // If all paths go in one group.
         // Insert all elements from 'v' into first (and only) group.
         pgs.emplace_back(v.begin(), v.end());
     } else {
         // Create path windows.
         std::vector<PathWindow> pws;
-        for (ulong lower = min_len, upper = lower + WINDOW_SIZE;
+        for (ulong lower = min_len, upper = lower + params.window_size;
                 lower <= max_len;
-                lower = upper, upper += WINDOW_SIZE) {
+                lower = upper, upper += params.window_size) {
             // Create a window with paths in the [lower, upper> range.
             pws.emplace_back(lower, upper, v);
             if ((pws.end() - 1)->getSumFreqs() == 0) { // If window is empty.
@@ -529,7 +529,7 @@ std::vector<PathGroup> PathManager::constructGroups(std::vector<const Path*>& v)
 #endif
 
         // Get path lengths that divide all paths into groups.
-        std::vector<ulong> bs = getBorderPathLengths(pws, RATIO_THRESHOLD);
+        std::vector<ulong> bs = getBorderPathLengths(pws, params.ratio_threshold);
 #ifdef DEBUG
         if (bs.size()) {
             std::cout << "Dividing path lengths: ";

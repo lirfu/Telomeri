@@ -12,10 +12,10 @@
 
 
 enum ParseState {
-    NONE, OLL, OLP, OHL, OHP
+    NONE, OLL, OLP, OHL, OHP, RB_ATT, BT_ATT, LEN_THR, NN_THR, W_SIZE, R_THR
 };
 
-ulong try_parse_len(const char *s) {
+ulong try_parse_pos_num(const char *s) {
     try {
         long v = std::stol(s);
 
@@ -64,12 +64,21 @@ int main(int argc, char **argv) {
             ULONG_MAX,
             1.0f
     };
+    PathManager::Parameters pm_params = {
+            500,
+            30,
+            10000ul,
+            50,
+            1000ul,
+            0.9f
+    };
 
     if (argc < 3) {
-        std::cerr << "Please provide a path to read-read and contig-read files!" << std::endl;
-        std::cerr << "Usage: hera [filter_option...] <read-read_overlap_file>.paf "
-                  << "<contig-read_overlap_file>.paf" << std::endl;
-        std::cerr << "Available filter options:\n"
+        std::cerr << "Please provide a path to read-read and contig-read files!\n"
+                  << "Usage: hera [option...] <read-read_overlap_file>.paf "
+                  << "<contig-read_overlap_file>.paf\n"
+                  << "\n"
+                  << "Available filter options:\n"
                   << "    --filter-avg         Use average length in filter comparisons (default value).\n"
                   << "    --filter-min         Use shorter length in filter comparisons.\n"
                   << "    --filter-max         Use longer length in filter comparisons.\n"
@@ -78,7 +87,21 @@ int main(int argc, char **argv) {
                   << "    --min-olp <value>    Minimum required overlap percentage (default = 0).\n"
                   << "    --max-ohl <value>    Maximum allowed overhang length (default = INT_MAX).\n"
                   << "    --max-ohP <value>    Maximum allowed overhang percentage (default = 1.0).\n"
-                  << "Percentages are in range [0.0, 1.0]." << std::endl;
+                  << "\n"
+                  << "Available path construction options:\n"
+                  << "    --rb-att  <value>    Number of path rebuild attempts if dead-end has been reached "
+                  << "(default = 500).\n"
+                  << "    --bt-att  <value>    Number of backtrack attempts when encountering a dead-end "
+                  << "(default = 30).\n"
+                  << "    --len-thr <value>    If difference between maximum and minimum path length is greater than "
+                  << "this threshold, all paths go into same group (default = 10000).\n"
+                  << "    --nn-thr <value>     Faster and simpler metric for length (default = 50).\n"
+                  << "    --w-size <value>     Window size in path length (default = 1000).\n"
+                  << "    --r-thr              Valley and peak ratio needed for splitting the paths into groups "
+                  << "according to lowest path length frequency in the valley window (default = 0.9).\n"
+                  << "\n"
+                  << "Percentages are in range [0.0, 1.0].\n"
+                  << std::endl;
         return 1;
     } else if (argc > 3) {
         ParseState parse_state = NONE;
@@ -107,13 +130,25 @@ int main(int argc, char **argv) {
                         parse_state = OHL;
                     } else if (arg == "--max-ohp") {
                         parse_state = OHP;
+                    } else if (arg == "--rb-att") {
+                        parse_state = RB_ATT;
+                    } else if (arg == "--bt-att") {
+                        parse_state = BT_ATT;
+                    } else if (arg == "--len-thr") {
+                        parse_state = LEN_THR;
+                    } else if (arg == "--nn-thr") {
+                        parse_state = NN_THR;
+                    } else if (arg == "--w-size") {
+                        parse_state = W_SIZE;
+                    } else if (arg == "--r-thr") {
+                        parse_state = R_THR;
                     } else {
                         std::cerr << "Unknown argument: " << arg << std::endl;
                         return 1;
                     }
                     break;
                 case OLL:
-                    filter_params.min_overlap_length = try_parse_len(argv[i]);
+                    filter_params.min_overlap_length = try_parse_pos_num(argv[i]);
                     parse_state = NONE;
                     break;
                 case OLP:
@@ -121,11 +156,35 @@ int main(int argc, char **argv) {
                     parse_state = NONE;
                     break;
                 case OHL:
-                    filter_params.max_overhang_length = try_parse_len(argv[i]);
+                    filter_params.max_overhang_length = try_parse_pos_num(argv[i]);
                     parse_state = NONE;
                     break;
                 case OHP:
                     filter_params.max_overhang_percentage = try_parse_perc(argv[i]);
+                    parse_state = NONE;
+                    break;
+                case RB_ATT:
+                    pm_params.rebuild_attempts = (int) try_parse_pos_num(argv[i]);
+                    parse_state = NONE;
+                    break;
+                case BT_ATT:
+                    pm_params.backtrack_attempts = (int) try_parse_pos_num(argv[i]);
+                    parse_state = NONE;
+                    break;
+                case LEN_THR:
+                    pm_params.len_threshold = (long) try_parse_pos_num(argv[i]);
+                    parse_state = NONE;
+                    break;
+                case NN_THR:
+                    pm_params.node_num_threshold = (long) try_parse_pos_num(argv[i]);
+                    parse_state = NONE;
+                    break;
+                case W_SIZE:
+                    pm_params.window_size = try_parse_pos_num(argv[i]);
+                    parse_state = NONE;
+                    break;
+                case R_THR:
+                    pm_params.ratio_threshold = try_parse_perc(argv[i]);
                     parse_state = NONE;
                     break;
             }
@@ -144,6 +203,14 @@ int main(int argc, char **argv) {
               << "    Min overlap percentage: " << filter_params.min_overlap_percentage << "\n"
               << "    Max overhang length: " << filter_params.max_overhang_length << "\n"
               << "    Max overhang percentage: " << filter_params.max_overhang_percentage << std::endl;
+    std::cout << "Path construction:\n"
+              << "    Rebuild attempts: " << pm_params.rebuild_attempts << "\n"
+              << "    Backtrack attempts: " << pm_params.backtrack_attempts << "\n"
+              << "    Length threshold: " << pm_params.len_threshold << "\n"
+              << "    Node number threshold: " << pm_params.node_num_threshold << "\n"
+              << "    Window size: " << pm_params.window_size << "\n"
+              << "    Ratio threshold: " << pm_params.ratio_threshold << "\n"
+              << std::endl;
 
     Stopwatch timer;
     timer.start();
@@ -168,6 +235,12 @@ int main(int argc, char **argv) {
     // Construct paths with following heuristics.
     std::cout << "Calculating paths..." << std::endl;
     PathManager pm;
+    pm.params_.rebuild_attempts = pm_params.rebuild_attempts;
+    pm.params_.backtrack_attempts = pm_params.backtrack_attempts;
+    pm.params_.len_threshold = pm_params.len_threshold;
+    pm.params_.node_num_threshold = pm_params.node_num_threshold;
+    pm.params_.window_size = pm_params.window_size;
+    pm.params_.ratio_threshold = pm_params.ratio_threshold;
     pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE);
     pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
     pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE);
@@ -195,7 +268,7 @@ int main(int argc, char **argv) {
 
         std::cout << "====> Constructing groups for paths between anchor '" << anchor1.name
             << "' and anchor '" << anchor2.name << "'..." << std::endl;
-        std::vector<PathGroup> pgs = PathManager::constructGroups(paths);
+        std::vector<PathGroup> pgs = PathManager::constructGroups(paths, pm.params_);
         for (size_t i = 0; i < pgs.size(); i++) {
             std::cout << "-- Group " << i << " lengths --\n" << pgs[i] << "\n---------------------\n";
         }

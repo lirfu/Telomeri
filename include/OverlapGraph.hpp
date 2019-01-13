@@ -53,18 +53,27 @@ public:
     };
 
     enum LengthCalculationMode {
-        MIN, /** Smaller of the lengths is used in filter comparisons */
-        MAX, /** Larger of the lengths is used in filter comparisons */
-        AVG, /** Average value of the lengths is used in filter comparisons */
-        SUM /** Sum of lengths is used in filter comparisons */
+        /** Smaller of the lengths is used in filter comparisons */
+        MIN,
+        /** Larger of the lengths is used in filter comparisons */
+        MAX,
+        /** Average value of the lengths is used in filter comparisons */
+        AVG,
+        /** Sum of lengths is used in filter comparisons */
+        SUM
     };
 
     struct FilterParameters {
-        LengthCalculationMode mode; /** Mode of length calculation */
-        ulong min_overlap_length; /** Minimum required overlap length */
-        float min_overlap_percentage; /** Minimum required overlap length, as percentage to total length */
-        ulong max_overhang_length; /** Maximum allowed overhang length */
-        float max_overhang_percentage; /** Maximum allowed overhang length, as percentage of overlap length */
+        /** Mode of length calculation */
+        LengthCalculationMode mode;
+        /** Minimum required overlap length */
+        ulong min_overlap_length;
+        /** Minimum required overlap length, as percentage to total length */
+        float min_overlap_percentage;
+        /** Maximum allowed overhang length */
+        ulong max_overhang_length;
+        /** Maximum allowed overhang length, as percentage of overlap length */
+        float max_overhang_percentage;
     };
 
     std::vector<Node> nodes_;

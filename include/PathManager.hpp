@@ -24,11 +24,31 @@ public:
 
     std::string stats();
 
+    struct Parameters {
+        /** Number of path rebuild attempts if dead-end has been reached. */
+        int rebuild_attempts;
+        /** Number of backtrack attempts when encountering a dead-end. */
+        int backtrack_attempts;
+        /** If difference between maximum and minimum path length is greater than
+         *  this threshold, all paths go into same group. */
+        long len_threshold;
+        /** Faster and simpler metric for length. */
+        long node_num_threshold;
+        /** Window size in path length. */
+        ulong window_size;
+        /** Valley and peak ratio needed for splitting the paths into groups
+         * according to lowest path length frequency in the valley window. */
+        float ratio_threshold;
+    };
+
+    Parameters params_;
+
     /** Constructs groups from the paths passed in. This should be paths that
      * connect a pair of anchors.
      * @param v Paths connecting two anchors. Sorted when this function returns.
+     * @param params Path manager parameters.
      * @return Groups of paths between two anchors. */
-    static std::vector<PathGroup> constructGroups(std::vector<const Path*>& v);
+    static std::vector<PathGroup> constructGroups(std::vector<const Path*>& v, PathManager::Parameters params);
 
     static std::pair<ulong, ulong> getMinMaxPathLength(std::vector<const Path*>& v);
 
@@ -38,22 +58,6 @@ public:
     std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
     std::vector<const Path*>>
     getPathsBetweenAnchors();
-
-private:
-    /** Number of path rebuild attempts if dead-end has been reached. */
-    static constexpr int REBUILD_ATTEMPTS = 500;
-    /** Number of backtrack attempts when encountering a dead-end. */
-    static constexpr int BACKTRACK_ATTEMPTS = 30;
-    /** If difference between maximum and minimum path length is greater than
-     *  this threshold, all paths go into same group. */
-    static constexpr long LEN_THRESHOLD = 10000ul;
-    /** Faster and simpler metric for length. */
-    static constexpr long NODE_NUM_THRESHOLD = 50;
-    /** Window size in path length. */
-    static constexpr ulong WINDOW_SIZE = 1000ul;
-    /** Valley and peak ratio needed for splitting the paths into groups
-     * according to lowest path length frequency in the valley window. */
-    static constexpr float RATIO_THRESHOLD = 0.9f;
 };
 
 
