@@ -279,23 +279,43 @@ int main(int argc, char **argv) {
 
     // TODO Construct consensus paths.
 //    std::cout << "Building the scaffold..." << std::endl;
+    Path scaffold;
+//    scaffold = pm.constructConsensusPath();
+
+    // Load sequences for the final scaffold.
+    std::cout << "\nLoading files for scaffolding..." << std::endl;
+    Scaffolder scaff(scaffold);
+    if (!scaff.load(rr_file) || !scaff.load(cr_file)) {
+        return 1;
+    }
+    std::cout << "Done (" << timer.lap() << "s)" << std::endl;
+
+    // Test scaffolder. Result should be: "EFGHI1234"
 //    Path scaffold;
-//    consensus = pm.constructConsensusPath();
+//    scaffold.nodes_.push_back(new OverlapGraph::Node(true, 0, 5, "0"));
+//    scaffold.nodes_.push_back(new OverlapGraph::Node(true, 1, 5, "1"));
+//    scaffold.nodes_.push_back(new OverlapGraph::Node(true, 2, 5, "2"));
+//    scaffold.nodes_.push_back(new OverlapGraph::Node(true, 3, 5, "3"));
+//    scaffold.edges_.push_back(new OverlapGraph::Edge(0, 1, 3, 3, 0, 0, 0, 0, 0));
+//    scaffold.edges_.push_back(new OverlapGraph::Edge(1, 2, 1, 2, 0, 1, 0, 0, 0));
+//    scaffold.edges_.push_back(new OverlapGraph::Edge(2, 3, 3, 4, 3, 4, 0, 0, 0));
 //
-//    // Load sequences for the final scaffold.
-//    std::cout << "\nLoading files for scaffolding..." << std::endl;
 //    Scaffolder scaff(scaffold);
-//    if (!scaff.load(rr_file) || !scaff.load(cr_file)) {
-//        return 1;
-//    }
-//    std::cout << "Done (" << timer.lap() << "s)" << std::endl << graph.stats() << std::endl;
-//
-//    // Write result to a file.
-//     std::cout << "Writing result to: " << RESULT_FILE << std::endl;
-//     if(!scaff.write(RESULT_FILE)) {
-//         return 1;
-//     }
-//     std::cout << "Done (" << timer.lap() << "s)" << std::endl;
+//    scaff.names_.push_back("0");
+//    scaff.names_.push_back("1");
+//    scaff.names_.push_back("2");
+//    scaff.names_.push_back("3");
+//    scaff.sequences_.push_back("01234");
+//    scaff.sequences_.push_back("56789");
+//    scaff.sequences_.push_back("0ABCD");
+//    scaff.sequences_.push_back("EFGHI");
+
+    // Write result to a file.
+    std::cout << "Writing result to: " << RESULT_FILE << std::endl;
+    if (!scaff.write(RESULT_FILE)) {
+        return 1;
+    }
+    std::cout << "Done (" << timer.lap() << "s)" << std::endl;
 
     std::cout << "Total time: " << timer.stop() << "s" << std::endl;
     return 0;
