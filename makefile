@@ -33,7 +33,7 @@ MAIN_SOURCE_FILE = src/Main.cpp
 DEBUG_FLAGS = -ggdb -O0 -DDEBUG
 
 # Compiler flags (common, C++ only and C only).
-CPPFLAGS = -Wall -pedantic-errors -O2 -MD -I$(INCLUDE_DIR) $(DEBUG_FLAGS)
+CPPFLAGS = -Wall -pedantic-errors -O2 -MD -I$(INCLUDE_DIR)
 CXXFLAGS = -xc++ -std=c++17 
 CFLAGS = -xc -std=c17
 # ------------------------------------------------------------------------------
