@@ -63,7 +63,7 @@ public:
             const std::map<std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *>,
                     std::vector<const Path *>> &,
             std::map<std::pair<const OverlapGraph::Node *,
-                    const OverlapGraph::Node *>, const Path *>&);
+                    const OverlapGraph::Node *>, const Path *>&, ulong min_path_num);
 };
 
 

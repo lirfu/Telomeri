@@ -644,9 +644,7 @@ Path PathManager::constructConsensusPath(
         const std::map<std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *>,
                 std::vector<const Path *>> &paths_between_contigs,
         std::map<std::pair<const OverlapGraph::Node *,
-                const OverlapGraph::Node *>, const Path *> &consensus_paths) {
-    ulong min_path_num = 4;
-
+                const OverlapGraph::Node *>, const Path *> &consensus_paths, ulong min_path_num) {
     std::map<std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *>, std::pair<const Path *, ulong>>
             filtered;
     std::vector<const OverlapGraph::Node *> nodes;
@@ -654,6 +652,7 @@ Path PathManager::constructConsensusPath(
     std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *> max_path_key;
 
     for (auto &pair:paths_between_contigs) {
+        if (!consensus_paths[pair.first]) continue;
         // Filter out small ones.
         ulong path_num = pair.second.size();
         if (path_num >= min_path_num) {
