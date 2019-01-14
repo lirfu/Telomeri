@@ -68,7 +68,12 @@ void PathGroup::calculateConsensusPath() {
         / pig_.size();
 
     // Return first element that has average or higher path length.
-    for (const auto pp : pig_) if (pp->length() >= avg) consensus = pp;
+    for (const auto pp : pig_) {
+        if (pp->length() >= avg) {
+            consensus = pp;
+            return;
+        }
+    }
 
     consensus = pig_.back(); // Return last element if none was found before.
 }

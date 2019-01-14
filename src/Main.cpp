@@ -269,9 +269,11 @@ int main(int argc, char **argv) {
         std::cout << "====> Constructing groups for paths between anchor '" << anchor1.name
                   << "' and anchor '" << anchor2.name << "'..." << std::endl;
         std::vector<PathGroup> pgs = PathManager::constructGroups(paths, pm.params_);
+#ifdef DEBUG
         for (size_t i = 0; i < pgs.size(); i++) {
             std::cout << "-- Group " << i << " lengths --\n" << pgs[i] << "\n---------------------\n";
         }
+#endif
         std::cout << "<==== Finished constructing groups for paths between anchor '"
                   << anchor1.name << "' and anchor '" << anchor2.name << "'!\n" << std::endl;
 
@@ -301,7 +303,7 @@ int main(int argc, char **argv) {
                           << "Valid path number: " << pg.valid_path_number << std::endl;
                 pgswc.push_back(&pg);
             } else {              // Consensus could not be calculated for the group.
-                std::cout << "No consensus sequence for group:\n" << pg << std::endl;
+                std::cout << "No consensus sequence for group!\n" << std::endl;
             }
         }
         std::cout << "Done finding consensus path in each group.\n";

@@ -4,12 +4,13 @@
 #include <iomanip>
 #include <bitset>
 #include <set>
+#include <random>
 
 #include <PathWindow.hpp>
 
 
 void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &metric) {
-    std::mt19937 gen(42);
+    std::mt19937 gen;
     std::uniform_real_distribution<> dis(0., 1.);
 
     std::cout << "> Monte Carlo heuristic: " << Utils::getMetricName(metric) << std::endl;
@@ -132,9 +133,9 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
 
                 // Abort if length is too large.
                 if (p.length() >= params_.len_threshold) {
-#ifdef DEBUG
-                    std::cout << "Length too large (" << p.length << "): " << p << std::endl;
-#endif
+//#ifdef DEBUG
+                    //std::cout << "Length too large (" << p.length << "): " << p << std::endl;
+//#endif
                     break;
                 }
             }
@@ -144,7 +145,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 p.updateLength();
 
                 if (p.length() < 0) {
-                    std::cout << "Path length is negative! (" << p.length() << ")  " << p << std::endl;
+                    //std::cout << "Path length is negative! (" << p.length() << ")  " << p << std::endl;
                     continue;
                 }
 
@@ -375,7 +376,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 path.updateLength();
 
                 if (path.length() < 0) {
-                    std::cout << "Path length is negative! (" << path.length() << ")  " << path << std::endl;
+                    //std::cout << "Path length is negative! (" << path.length() << ")  " << path << std::endl;
                     continue;
                 }
 
@@ -506,16 +507,15 @@ std::vector<ulong> getBorderPathLengths(const std::vector<PathWindow> &pws,
                                         float ratio_threshold);
 
 std::vector<PathGroup> PathManager::constructGroups(std::vector<const Path *> &v, PathManager::Parameters params) {
-    // Get min and max path lengths.
-    std::pair<ulong, ulong> mm = getMinMaxPathLength(v);
-    ulong min_len = mm.first;
-    ulong max_len = mm.second;
-
     // Sort paths for those two anchors in ascending order.
     std::sort(v.begin(), v.end(),
               [](const Path *a, const Path *b) {
                   return a->length() < b->length();
               });
+
+    // Get min and max path lengths.
+    ulong min_len = v.front()->length();
+    ulong max_len = v.back()->length();
 
     // Create path groups.
     std::vector<PathGroup> pgs;
