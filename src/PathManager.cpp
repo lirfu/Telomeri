@@ -4,8 +4,10 @@
 #include <iomanip>
 #include <bitset>
 #include <set>
+#include <random>
 
 #include <PathWindow.hpp>
+
 
 void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &metric) {
     std::mt19937 gen(42);
@@ -69,7 +71,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                     edge = anchor_edge;
                 } else if (appropriate_edges.empty()) {  // No edges available (dead-end), backtrack.
 #ifdef DEBUG
-                    std::cout << "No edges available for: \t" << p << std::endl;
+                    std::cout << "No edges available for: \t" << p << '\n';
 #endif
                     if (backtracks < params_.backtrack_attempts && p.edges_.size() > 1) {  // Backtrack possible.
                         bool t = false;
@@ -87,15 +89,11 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
 
                         if (p.edges_.empty()) {
 #ifdef DEBUG
-                            std::cout << "Nothing to backtrack to: " << p << std::endl;
+                            std::cout << "Nothing to backtrack to: " << p << '\n';
 #endif
                             break;
                         }
                         ++backtracks;
-#ifdef DEBUG
-                        std::cout << "Backtrack " << backtracks << "/"
-                                  << BACKTRACK_ATTEMPTS << " to: \t" << p << std::endl;
-#endif
 
                         n = p.nodes_.back();
                         continue;
@@ -133,7 +131,7 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 // Abort if length is too large.
                 if (p.nodes_.size() >= params_.node_num_threshold) {
 #ifdef DEBUG
-                    std::cout << "Length too large (" << p.nodes_.size() << "): " << p << std::endl;
+                    std::cout << "Length too large (" << p.nodes_.size() << "): " << p << '\n';
 #endif
                     break;
                 }
@@ -146,15 +144,15 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 ++found;
 #ifdef DEBUG
                 std::cout << "Found path #" << paths_.size() << " of " << p.nodes_.size() << " nodes and "
-                          << p.length() << " paths: " << p << std::endl;
+                          << p.length() << " paths: " << p << '\n';
 #endif
             }
 #ifdef DEBUG
             else {
-                std::cout << "No path found!" << std::endl;
+                std::cout << "No path found!\n";
                 p.updateLength();
                 std::cout << "Aborted paths' length: " << p.length() << "bp, "
-                          << p.nodes_.size() << " nodes." << std::endl;
+                          << p.nodes_.size() << " nodes.\n";
             }
 #endif
         }
@@ -508,8 +506,8 @@ std::vector<PathGroup> PathManager::constructGroups(std::vector<const Path *> &v
              lower = upper, upper += params.window_size) {
             // Create a window with paths in the [lower, upper> range.
             pws.emplace_back(lower, upper, v);
-            if ((pws.end() - 1)->getSumFreqs() == 0) { // If window is empty.
-                pws.pop_back();                        // Remove empty window.
+            if (pws.back().getSumFreqs() == 0) { // If window is empty.
+                pws.pop_back();                  // Remove empty window.
             }
         }
 #ifdef DEBUG
@@ -546,7 +544,7 @@ std::vector<PathGroup> PathManager::constructGroups(std::vector<const Path *> &v
             // Iterate over borders (dividing path lengths).
             for (ulong cur_border : bs) {
                 // Find first outside the border.
-                for (end = begin; (*end)->length() < cur_border; end++);
+                for (end = begin + 1; (*end)->length() < cur_border; end++);
 
                 // Create group: [PreviousBorder, CurrentBorder>.
                 pgs.emplace_back(begin, end);

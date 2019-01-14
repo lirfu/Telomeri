@@ -271,7 +271,7 @@ int main(int argc, char **argv) {
     for (auto &pbai : paths_between_anchors) { // Construct groups and fill groups_for_anchors map.
         const OverlapGraph::Node &anchor1 = *pbai.first.first;  // Begin anchor.
         const OverlapGraph::Node &anchor2 = *pbai.first.second; // End anchor.
-        std::vector<const Path *> &paths = pbai.second;          // Paths connecting begin and end anchor.
+        std::vector<const Path *> &paths = pbai.second;         // Paths connecting begin and end anchor.
 
         std::cout << "====> Constructing groups for paths between anchor '" << anchor1.name
                   << "' and anchor '" << anchor2.name << "'..." << std::endl;
@@ -297,7 +297,7 @@ int main(int argc, char **argv) {
                   << "' and anchor '" << anchor2.name << "'..." << std::endl;
         std::vector<PathGroup> &pgs = anchors_groups_pair.second;
 
-        std::vector<PathGroup *> pgswc;     // Path groups with consensus (not all have it). Filled in the following for loop.
+        std::vector<PathGroup *> pgswc;    // Path groups with consensus (not all have it). Filled in the following for loop.
         for (PathGroup &pg : pgs) {        // Iterate over path groups.
             pg.discardNotFrequent();       // Discard infrequent paths in each group.
             pg.calculateConsensusPath();   // Calculate consensus path for this group and set it in pg object.
