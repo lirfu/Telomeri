@@ -56,6 +56,8 @@ float try_parse_perc(const char *s) {
 int main(int argc, char **argv) {
     char *rr_file;
     char *cr_file;
+    char *reads_file;
+    char *contigs_file;
     const char *mode_string = "AVG";
     OverlapGraph::FilterParameters filter_params = {
             OverlapGraph::AVG,
@@ -65,18 +67,18 @@ int main(int argc, char **argv) {
             1.0f
     };
     PathManager::Parameters pm_params = {
-            500,
-            30,
+            5000,
+            200,
             10000ul,
-            50,
+            1000,
             1000ul,
             0.9f
     };
 
-    if (argc < 3) {
+    if (argc < 5) {
         std::cerr << "Please provide a path to read-read and contig-read files!\n"
                   << "Usage: hera [option...] <read-read_overlap_file>.paf "
-                  << "<contig-read_overlap_file>.paf\n"
+                  << "<contig-read_overlap_file>.paf <reads_file>.fasta <contigs_file>.fasta\n"
                   << "\n"
                   << "Available filter options:\n"
                   << "    --filter-avg         Use average length in filter comparisons (default value).\n"
@@ -103,7 +105,7 @@ int main(int argc, char **argv) {
                   << "Percentages are in range [0.0, 1.0].\n"
                   << std::endl;
         return 1;
-    } else if (argc > 3) {
+    } else if (argc > 5) {
         ParseState parse_state = NONE;
 
         for (int i = 1; i < argc - 2; i++) {
@@ -190,11 +192,15 @@ int main(int argc, char **argv) {
             }
         }
 
-        rr_file = argv[argc - 2];
-        cr_file = argv[argc - 1];
+        rr_file = argv[argc - 4];
+        cr_file = argv[argc - 3];
+        reads_file = argv[argc - 2];
+        contigs_file = argv[argc - 1];
     } else {
         rr_file = argv[1];
         cr_file = argv[2];
+        reads_file = argv[3];
+        contigs_file = argv[4];
     }
 
     std::cout << "Filter:\n"
@@ -283,6 +289,7 @@ int main(int argc, char **argv) {
     std::map<std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *>, const Path *>
             consensus_for_anchors;
 
+    long conssensus_num = 0;
     for (auto &anchors_groups_pair : groups_for_anchors) { // Iterate over map, ([a1, a2], path_groups) pairs.
         const OverlapGraph::Node &anchor1 = *anchors_groups_pair.first.first;  // Begin anchor.
         const OverlapGraph::Node &anchor2 = *anchors_groups_pair.first.second; // End anchor.
@@ -337,23 +344,29 @@ int main(int argc, char **argv) {
 
         // Log the final consensus lenght to the standard output.
         const Path *consensus = consensus_for_anchors.at({&anchor1, &anchor2}); // Final consensus.
-        if (consensus) std::cout << "Final consensus (consensus among groups) length: " << consensus->length() << '\n';
-        else std::cout << "Final consensus not found!\n";
+        if (consensus && ++conssensus_num)
+            std::cout << "Final consensus (consensus among groups) length: " << consensus->length() << '\n';
+        else
+            std::cout << "Final consensus not found!\n";
         std::cout << "====> Done finding consensus between anchor '" << anchor1.name
                   << "' and anchor '" << anchor2.name << "'!" << std::endl;
     }
 
+    if (conssensus_num == 0) {
+        std::cerr << "No consensus found!" << std::endl;
+        return 1;
+    }
 
     // Construct consensus paths.
     std::cout << "Building the scaffold..." << std::endl;
     Path scaffold;
-    scaffold = pm.constructConsensusPath(paths_between_anchors, consensus_for_anchors);
+    scaffold = pm.constructConsensusPath(paths_between_anchors, consensus_for_anchors, 10);
     std::cout << "Done (" << timer.lap() << "s)" << std::endl;
 
     // Load sequences for the final scaffold.
     std::cout << "\nLoading files for scaffolding..." << std::endl;
     Scaffolder scaff(scaffold);
-    if (!scaff.load("../res/EColi_synthetic/reads.fasta") || !scaff.load("../res/EColi_synthetic/contigs.fasta")) {
+    if (!scaff.load(reads_file) || !scaff.load(contigs_file)) {
         return 1;
     }
     std::cout << "Done (" << timer.lap() << "s)" << std::endl;
