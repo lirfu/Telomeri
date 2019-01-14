@@ -6,10 +6,11 @@
 #include <fstream>
 #include <iostream>
 #include <Utils.hpp>
+#include <cstring>
 
 
 bool Scaffolder::load(const char *filename) {
-    bool fastq = Utils::fileExtensionMatches(filename, ".fastq");
+    bool fastq = filename[strlen(filename) - 1] == 'q';
 
     std::fstream filestream;
     filestream.open(filename, std::fstream::in);
@@ -18,15 +19,21 @@ bool Scaffolder::load(const char *filename) {
         return false;
     }
 
-    std::string name;
-    std::string sequence;
-    while (filestream >> name) {
-        filestream >> sequence;
-        names_.emplace_back(name.begin() + 1, name.end());
-        sequences_.emplace_back(sequence.begin() + 1, sequence.end());
-        if (fastq) { // Skip quality lines.
-            filestream >> name;
-            filestream >> name;
+    std::string line;
+    bool reading_name = true;
+    while (std::getline(filestream, line)) {
+        if (reading_name) {
+            std::istringstream iss(line);
+            iss >> line;
+            names_.emplace_back(line.begin() + 1, line.end()); // Skip first carret.
+            reading_name = !reading_name;
+        } else {
+            sequences_.emplace_back(line.begin(), line.end());
+            reading_name = !reading_name;
+            if (fastq) { // Skip quality lines.
+                std::getline(filestream, line);
+                std::getline(filestream, line);
+            }
         }
     }
     filestream.close();
