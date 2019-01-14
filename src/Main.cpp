@@ -249,13 +249,13 @@ int main(int argc, char **argv) {
     pm.params_.ratio_threshold = pm_params.ratio_threshold;
 
     pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE);
-    pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
+//    pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
     pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE);
-    pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
+//    pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
     pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE);
-    pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
+//    pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
     pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE);
-    pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
+//    pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
 
     // Filter uniques.
     pm.filterUnique();

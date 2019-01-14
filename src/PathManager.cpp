@@ -4,7 +4,6 @@
 #include <iomanip>
 #include <bitset>
 #include <set>
-#include <random>
 
 #include <PathWindow.hpp>
 
@@ -122,6 +121,9 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 p.edges_.push_back(edge);
                 visited_nodes[n->index] = true;
 
+                p.updateLength();
+                if(p.length() <= 0){break;}
+
                 // If node is anchor, add the node and break.
                 if (n->anchor) {
                     acceptable = true; // Accept path.
@@ -129,7 +131,6 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 }
 
                 // Abort if length is too large.
-                p.updateLength();
                 if (p.length() >= params_.len_threshold) {
 #ifdef DEBUG
                     std::cout << "Length too large (" << p.length << "): " << p << std::endl;
@@ -141,6 +142,12 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
             // Path ready to be added.
             if (acceptable) {
                 p.updateLength();
+
+                if (p.length() < 0) {
+                    std::cout << "Path length is negative! (" << p.length() << ")  " << p << std::endl;
+                    continue;
+                }
+
                 paths_.push_back(p);
                 ++found;
 #ifdef DEBUG
@@ -366,6 +373,12 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
 
             if (all_ok) {
                 path.updateLength();
+
+                if (path.length() < 0) {
+                    std::cout << "Path length is negative! (" << path.length() << ")  " << path << std::endl;
+                    continue;
+                }
+
                 paths_.push_back(path);
                 ++found;
             }
@@ -432,11 +445,21 @@ std::string PathManager::stats() {
     ulong max_len = std::get<1>(mms);
     ulong sum_len = std::get<2>(mms);
 
+    ulong negatives = 0;
+    for (const Path &p:paths_) {
+        if (p.length() < 0) {
+            negatives++;
+        }
+    }
+
     str << "Paths" << '\n'
         << "- total_num: " << paths_.size() << '\n'
         << "-   min_len: " << min_len << '\n'
         << "-   max_len: " << max_len << '\n'
         << "-   avg_len: " << (paths_.size() > 0 ? sum_len / paths_.size() : 0) << std::endl;
+    if (negatives > 0) {
+        str << "- negatives: " << negatives << std::endl;
+    }
 
     return str.str();
 }
