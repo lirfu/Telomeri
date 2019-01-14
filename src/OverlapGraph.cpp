@@ -237,7 +237,7 @@ void OverlapGraph::buildFrom(
             overlap.query_end,
             overlap.target_start,
             overlap.target_end,
-            OS, SI, ES);
+            OS, SI, ES, overlap.relative_strand=='-');
     edges_.push_back(e);
 
     nodes_[tn_index].edges.push_back(e);
@@ -271,10 +271,10 @@ void OverlapGraph::Node::to_stream(std::ostream &s) const {
 }
 
 OverlapGraph::Edge::Edge(uint q_index, uint t_index, uint q_start, uint q_end, uint t_start, uint t_end,
-                         float overlap_score, float sequence_identity, float extension_score)
+                         float overlap_score, float sequence_identity, float extension_score, bool relative_strand)
         : q_index(q_index), t_index(t_index), q_start(q_start), q_end(q_end), t_start(t_start), t_end(t_end),
           overlap_score(overlap_score), sequence_identity(sequence_identity),
-          extension_score(extension_score) {}
+          extension_score(extension_score), relative_strand(relative_strand) {}
 
 OverlapGraph::Edge &OverlapGraph::Edge::operator=(OverlapGraph::Edge &&e) noexcept {
     std::swap(q_index, e.q_index);
