@@ -58,6 +58,12 @@ public:
     std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
     std::vector<const Path*>>
     getPathsBetweenAnchors();
+
+    Path constructConsensusPath(
+            const std::map<std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *>,
+                    std::vector<const Path *>> &,
+            std::map<std::pair<const OverlapGraph::Node *,
+                    const OverlapGraph::Node *>, const Path *>&);
 };
 
 

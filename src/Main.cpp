@@ -25,9 +25,9 @@ ulong try_parse_pos_num(const char *s) {
         }
 
         return static_cast<ulong>(v);
-    } catch (std::invalid_argument& e) {
+    } catch (std::invalid_argument &e) {
         std::cerr << "Invalid int value: " << s << std::endl;
-    } catch (std::out_of_range& e) {
+    } catch (std::out_of_range &e) {
         std::cerr << "Provided value is outside of int range: " << s << std::endl;
     }
 
@@ -44,9 +44,9 @@ float try_parse_perc(const char *s) {
         }
 
         return v;
-    } catch (std::invalid_argument& e) {
+    } catch (std::invalid_argument &e) {
         std::cerr << "Invalid float value: " << s << std::endl;
-    } catch (std::out_of_range& e) {
+    } catch (std::out_of_range &e) {
         std::cerr << "Provided value is outside of float range: " << s << std::endl;
     }
 
@@ -255,56 +255,57 @@ int main(int argc, char **argv) {
     std::cout << "Done (" << timer.lap() << "s)" << std::endl << pm.stats() << std::endl;
 
     // Map of anchor pairs and paths between those two anchors: [anchor1, anchor2] => {path1, path2, ...}
-    auto paths_between_anchors = pm.getPathsBetweenAnchors();
+    std::map<std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *>, std::vector<const Path *>>
+            paths_between_anchors = pm.getPathsBetweenAnchors();
 
     // Map of path groups between those two anchors: [anchor1, anchor2] => {group1, group2, ...}
-    std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
-            std::vector<PathGroup>> groups_for_anchors;
+    std::map<std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *>, std::vector<PathGroup>>
+            groups_for_anchors;
 
-    for (auto& pbai : paths_between_anchors) { // Construct groups and fill groups_for_anchors map.
-        const OverlapGraph::Node& anchor1 = *pbai.first.first;  // Begin anchor.
-        const OverlapGraph::Node& anchor2 = *pbai.first.second; // End anchor.
-        std::vector<const Path*>& paths = pbai.second;          // Paths connecting begin and end anchor.
+    for (auto &pbai : paths_between_anchors) { // Construct groups and fill groups_for_anchors map.
+        const OverlapGraph::Node &anchor1 = *pbai.first.first;  // Begin anchor.
+        const OverlapGraph::Node &anchor2 = *pbai.first.second; // End anchor.
+        std::vector<const Path *> &paths = pbai.second;          // Paths connecting begin and end anchor.
 
         std::cout << "====> Constructing groups for paths between anchor '" << anchor1.name
-            << "' and anchor '" << anchor2.name << "'..." << std::endl;
+                  << "' and anchor '" << anchor2.name << "'..." << std::endl;
         std::vector<PathGroup> pgs = PathManager::constructGroups(paths, pm.params_);
         for (size_t i = 0; i < pgs.size(); i++) {
             std::cout << "-- Group " << i << " lengths --\n" << pgs[i] << "\n---------------------\n";
         }
         std::cout << "<==== Finished constructing groups for paths between anchor '"
-            << anchor1.name << "' and anchor '" << anchor2.name << "'!\n" << std::endl;
+                  << anchor1.name << "' and anchor '" << anchor2.name << "'!\n" << std::endl;
 
         groups_for_anchors[{&anchor1, &anchor2}] = pgs; // Store all groups for the anchor in the map of path groups.
     }
 
     // Find a consensus for each pair of anchors.
-    std::map<std::pair<const OverlapGraph::Node*, const OverlapGraph::Node*>,
-            const Path*> consensus_for_anchors;
+    std::map<std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *>, const Path *>
+            consensus_for_anchors;
 
-    for (auto& anchors_groups_pair : groups_for_anchors) { // Iterate over map, ([a1, a2], path_groups) pairs.
-        const OverlapGraph::Node& anchor1 = *anchors_groups_pair.first.first;  // Begin anchor.
-        const OverlapGraph::Node& anchor2 = *anchors_groups_pair.first.second; // End anchor.
+    for (auto &anchors_groups_pair : groups_for_anchors) { // Iterate over map, ([a1, a2], path_groups) pairs.
+        const OverlapGraph::Node &anchor1 = *anchors_groups_pair.first.first;  // Begin anchor.
+        const OverlapGraph::Node &anchor2 = *anchors_groups_pair.first.second; // End anchor.
         std::cout << "====> Finding consensus path in each group between anchor '" << anchor1.name
-            << "' and anchor '" << anchor2.name << "'..." << std::endl;
-        std::vector<PathGroup>& pgs = anchors_groups_pair.second;
-        
-        std::vector<PathGroup*> pgswc;     // Path groups with consensus (not all have it). Filled in the following for loop.
-        for (PathGroup& pg : pgs) {        // Iterate over path groups.
+                  << "' and anchor '" << anchor2.name << "'..." << std::endl;
+        std::vector<PathGroup> &pgs = anchors_groups_pair.second;
+
+        std::vector<PathGroup *> pgswc;     // Path groups with consensus (not all have it). Filled in the following for loop.
+        for (PathGroup &pg : pgs) {        // Iterate over path groups.
             pg.discardNotFrequent();       // Discard infrequent paths in each group.
             pg.calculateConsensusPath();   // Calculate consensus path for this group and set it in pg object.
             pg.calculateValidPathNumber(); // Count number of paths equal to group consensus.
 
             if (pg.consensus) { // Group has consensus.
-                std::cout << "Consensus length: "  << pg.consensus->length() << "    "
-                          << "Valid path number: " << pg.valid_path_number   << std::endl;
+                std::cout << "Consensus length: " << pg.consensus->length() << "    "
+                          << "Valid path number: " << pg.valid_path_number << std::endl;
                 pgswc.push_back(&pg);
             } else {              // Consensus could not be calculated for the group.
                 std::cout << "No consensus sequence for group:\n" << pg << std::endl;
             }
         }
         std::cout << "Done finding consensus path in each group.\n";
-        
+
         // Calculate consensus among groups for this pair of anchors (final sequence connecting the anchors).
         if (pgswc.empty()) { // No consensus between anchors.
             consensus_for_anchors[{&anchor1, &anchor2}] = nullptr;
@@ -313,52 +314,46 @@ int main(int argc, char **argv) {
         } else {
             // Sort path groups by consensus length in descending order.
             std::sort(pgswc.begin(), pgswc.end(),
-                    [](const PathGroup* pgp1, const PathGroup* pgp2) {
-                        return pgp1->consensus->length() > pgp2->consensus->length(); 
-                    });
+                      [](const PathGroup *pgp1, const PathGroup *pgp2) {
+                          return pgp1->consensus->length() > pgp2->consensus->length();
+                      });
             if (pgswc.size() == 2) { // Only two groups with consensus between this pair of anchors.
                 // Use longer path length as consensus for this region.
-                consensus_for_anchors[{&anchor1, &anchor2}] = pgswc[0]->consensus; 
+                consensus_for_anchors[{&anchor1, &anchor2}] = pgswc[0]->consensus;
             } else { // There are more than two path groups with calculated consensus.
                 // Go over consecutive group pairs and compare those groups by consensus length.
-                const PathGroup* longer = pgswc[0]; // Group with longer consensus. Initially, group with longest consensus.
+                const PathGroup *longer = pgswc[0]; // Group with longer consensus. Initially, group with longest consensus.
                 for (size_t i = 1, n = pgswc.size(); i < n; i++) { // Go over consecutive pairs of path groups.
-                    const PathGroup* shorter = pgswc[i]; // Path group with shorter consensus (out of two).
+                    const PathGroup *shorter = pgswc[i]; // Path group with shorter consensus (out of two).
 
                     // Check if valid path number in the longer group is less or equal to half of the number in the shorter group.
                     if (2 * longer->valid_path_number <= shorter->valid_path_number) {
                         longer = shorter; // Shorter is the winner of this comparison and goes into the next round.
                     }
                 }
-                consensus_for_anchors[{&anchor1, &anchor2}] = longer->consensus; 
+                consensus_for_anchors[{&anchor1, &anchor2}] = longer->consensus;
             }
         }
 
         // Log the final consensus lenght to the standard output.
-        const Path* consensus = consensus_for_anchors.at({&anchor1, &anchor2}); // Final consensus.
+        const Path *consensus = consensus_for_anchors.at({&anchor1, &anchor2}); // Final consensus.
         if (consensus) std::cout << "Final consensus (consensus among groups) length: " << consensus->length() << '\n';
-        else           std::cout << "Final consensus not found!\n";
+        else std::cout << "Final consensus not found!\n";
         std::cout << "====> Done finding consensus between anchor '" << anchor1.name
-            << "' and anchor '" << anchor2.name << "'!" << std::endl;
+                  << "' and anchor '" << anchor2.name << "'!" << std::endl;
     }
 
 
-    // TODO Re-group based on current group scores (this may be misinterpreted).
-    // SomeOtherFunc f1;
-    // pm.constructGroups(f1);
-
-    // TODO Filter rare paths (this may be misinterpreted).
-    // pm.filterRare();
-
-    // TODO Construct consensus paths.
-//    std::cout << "Building the scaffold..." << std::endl;
+    // Construct consensus paths.
+    std::cout << "Building the scaffold..." << std::endl;
     Path scaffold;
-//    scaffold = pm.constructConsensusPath();
+    scaffold = pm.constructConsensusPath(paths_between_anchors, consensus_for_anchors);
+    std::cout << "Done (" << timer.lap() << "s)" << std::endl;
 
     // Load sequences for the final scaffold.
     std::cout << "\nLoading files for scaffolding..." << std::endl;
     Scaffolder scaff(scaffold);
-    if (!scaff.load(rr_file) || !scaff.load(cr_file)) {
+    if (!scaff.load("../res/EColi_synthetic/reads.fasta") || !scaff.load("../res/EColi_synthetic/contigs.fasta")) {
         return 1;
     }
     std::cout << "Done (" << timer.lap() << "s)" << std::endl;

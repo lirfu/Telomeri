@@ -43,7 +43,7 @@ bool Scaffolder::write(const char *filename) {
 
     filestream << ">Resulting_HERA_scaffold" << std::endl;
 
-    // TODO Watch out for screwed-up strands (reversed or inverted or relative_strand or whatever).
+    // TODO Watch out for screwed-up strands (inverted or relative_strand or whatever).
     std::string sequence, tmp;
     if (p_.nodes_.size() == 0) {
         std::cerr << "Scaffold is empty!" << std::endl;
