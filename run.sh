@@ -23,6 +23,9 @@ fi
 # Source directory.
 dir=$1
 
+# Output file
+out_file=$dir/"HERA_result.fasta"
+
 # Standardized input file names.
 reads_file=$dir/"reads.fast?"
 contigs_file=$dir/"contigs.fast?"
@@ -41,4 +44,4 @@ else
     echo "Using existing overlap files!"
 fi
 
-./Telomeri $rr_file $cr_file $reads_file $contigs_file
+./Telomeri $rr_file $cr_file $reads_file $contigs_file $out_file

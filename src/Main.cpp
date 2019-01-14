@@ -4,13 +4,6 @@
 #include <Stopwatch.hpp>
 #include <Scaffolder.hpp>
 
-#define READS_FILE "reads"
-#define CONTIGS_FILE "contigs"
-#define RR_OVERLAP_FILE "rr_overlap.paf"
-#define CR_OVERLAP_FILE "cr_overlap.paf"
-#define RESULT_FILE "hera_result.fasta"
-
-
 enum ParseState {
     NONE, OLL, OLP, OHL, OHP, RB_ATT, BT_ATT, LEN_THR, NN_THR, W_SIZE, R_THR
 };
@@ -58,6 +51,7 @@ int main(int argc, char **argv) {
     char *cr_file;
     char *reads_file;
     char *contigs_file;
+    char *output_file;
     const char *mode_string = "AVG";
     OverlapGraph::FilterParameters filter_params = {
             OverlapGraph::AVG,
@@ -74,10 +68,10 @@ int main(int argc, char **argv) {
             0.9f
     };
 
-    if (argc < 5) {
+    if (argc < 6) {
         std::cerr << "Please provide a path to read-read and contig-read files!\n"
-                  << "Usage: hera [option...] <read-read_overlap_file>.paf "
-                  << "<contig-read_overlap_file>.paf <reads_file>.fasta <contigs_file>.fasta\n"
+                  << "Usage: hera [option...] <read-read_overlap_file>.paf <contig-read_overlap_file>.paf "
+                  << "<reads_file>.fasta <contigs_file>.fasta <output_file>.fasta\n"
                   << "\n"
                   << "Available filter options:\n"
                   << "    --filter-avg         Use average length in filter comparisons (default value).\n"
@@ -103,7 +97,7 @@ int main(int argc, char **argv) {
                   << "Percentages are in range [0.0, 1.0].\n"
                   << std::endl;
         return 1;
-    } else if (argc > 5) {
+    } else if (argc > 6) {
         ParseState parse_state = NONE;
 
         for (int i = 1; i < argc - 2; i++) {
@@ -186,15 +180,17 @@ int main(int argc, char **argv) {
             }
         }
 
-        rr_file = argv[argc - 4];
-        cr_file = argv[argc - 3];
-        reads_file = argv[argc - 2];
-        contigs_file = argv[argc - 1];
+        rr_file = argv[argc - 5];
+        cr_file = argv[argc - 4];
+        reads_file = argv[argc - 3];
+        contigs_file = argv[argc - 2];
+        output_file = argv[argc - 1];
     } else {
         rr_file = argv[1];
         cr_file = argv[2];
         reads_file = argv[3];
         contigs_file = argv[4];
+        output_file = argv[5];
     }
 
     std::cout << "Filter:\n"
@@ -387,8 +383,8 @@ int main(int argc, char **argv) {
 //    scaff.sequences_.push_back("EFGHI");
 
     // Write result to a file.
-    std::cout << "Writing result to: " << RESULT_FILE << std::endl;
-    if (!scaff.write(RESULT_FILE)) {
+    std::cout << "Writing result to: " << output_file << std::endl;
+    if (!scaff.write(output_file)) {
         return 1;
     }
     std::cout << "Done (" << timer.lap() << "s)" << std::endl;
