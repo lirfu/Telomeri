@@ -4,7 +4,6 @@
 #include <iomanip>
 #include <bitset>
 #include <set>
-#include <random>
 
 #include <PathWindow.hpp>
 
@@ -123,7 +122,9 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 visited_nodes[n->index] = true;
 
                 p.updateLength();
-                if(p.length() <= 0){break;}
+                if (p.length() <= 0) { // Abort when path becomes negative.
+                    break;
+                }
 
                 // If node is anchor, add the node and break.
                 if (n->anchor) {
@@ -227,7 +228,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
             }
 
             // Defines will the path be added (considered).
-            bool all_ok = true;
+            bool all_ok = false;
             int step_index = 0;
             // Defines how many of best-scoring nodes will be ignored for path construction.
             // 0 = use best-scoring node
@@ -243,12 +244,10 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 if (node->edges.empty()) {
                     if (step_index == 0) {
                         // Cannot go back a step, drop this path
-                        all_ok = false;
                         break;
                     } else {
                         // we will only go back a step once
                         if (went_back) {
-                            all_ok = false;
                             break;
                         }
                         went_back = true;
@@ -267,13 +266,11 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 if (skip_n_best >= node->edges.size() - 1) {
                     if (step_index == 0) {
                         // Cannot go back a step, drop this path
-                        all_ok = false;
                         break;
                     }
 
                     // we will only go back a step once
                     if (went_back) {
-                        all_ok = false;
                         break;
                     }
                     went_back = true;
@@ -320,13 +317,11 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
                 if (!edge_found) {
                     if (step_index == 0) {
                         // Cannot go back a step, drop this path
-                        all_ok = false;
                         break;
                     }
 
                     // we will only go back a step once
                     if (went_back) {
-                        all_ok = false;
                         break;
                     }
                     went_back = true;
@@ -366,6 +361,7 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
 #endif
                 // If target node is anchor, add the node and break.
                 if (node->anchor) {
+                    all_ok = true;
                     break;
                 }
 
@@ -375,8 +371,10 @@ void PathManager::buildDeterministic(const OverlapGraph &g,
             if (all_ok) {
                 path.updateLength();
 
-                if (path.length() < 0) {
-                    //std::cout << "Path length is negative! (" << path.length() << ")  " << path << std::endl;
+                if (path.length() < 0) { // Skip negative paths.
+#ifdef DEBUG
+                    std::cout << "Path length is negative! (" << path.length() << ")  " << path << std::endl;
+#endif
                     continue;
                 }
 
@@ -667,14 +665,19 @@ Path PathManager::constructConsensusPath(
                 std::vector<const Path *>> &paths_between_contigs,
         std::map<std::pair<const OverlapGraph::Node *,
                 const OverlapGraph::Node *>, const Path *> &consensus_paths, ulong min_path_num) {
+
     std::map<std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *>, std::pair<const Path *, ulong>>
             filtered;
     std::vector<const OverlapGraph::Node *> nodes;
     ulong max_path_num = 0;
     std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *> max_path_key;
 
-    for (auto &pair:paths_between_contigs) {
-        if (!consensus_paths[pair.first]) continue; // Some bug?
+    for (auto &pair : paths_between_contigs) {
+        if (!consensus_paths.at(pair.first)) { // Skip empty pairs.
+            continue;
+        }
+
+        std::cout << pair.first.first->name << " " << pair.first.second->name << " " << pair.second.size() << std::endl;
 
         // Filter out small ones.
         ulong path_num = pair.second.size();
@@ -696,16 +699,16 @@ Path PathManager::constructConsensusPath(
         }
     }
 
-    // Most often path is the seed.
-    Path scaffold = *consensus_paths[max_path_key];
+    // Most often path is the seed for construction.
+    Path scaffold = *consensus_paths.at(max_path_key);
 
     const OverlapGraph::Node *left_anchor = max_path_key.first;
     const OverlapGraph::Node *right_anchor = max_path_key.second;
 
     // Don't repeat visited nodes.
     std::vector<const OverlapGraph::Node *> visited;
-    visited.push_back(max_path_key.first);
-    visited.push_back(max_path_key.second);
+    visited.push_back(left_anchor);
+    visited.push_back(right_anchor);
 
 
     std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *> pair;
@@ -718,7 +721,7 @@ Path PathManager::constructConsensusPath(
             if (!Utils::contains(visited, n)) { // Don't visit twice.
                 // Check left.
                 pair = {n, left_anchor};
-                if (max_path_num < filtered[pair].second) {
+                if (filtered.count(pair) > 0 && max_path_num < filtered[pair].second) {
                     max_path_num = filtered[pair].second;
                     max_path_key = pair;
                     left = true;
@@ -728,7 +731,7 @@ Path PathManager::constructConsensusPath(
 
                 // Check right.
                 pair = {right_anchor, n};
-                if (max_path_num < filtered[pair].second) {
+                if (filtered.count(pair) > 0 && max_path_num < filtered[pair].second) {
                     max_path_num = filtered[pair].second;
                     max_path_key = pair;
                     left = false;
@@ -745,15 +748,15 @@ Path PathManager::constructConsensusPath(
 
         // Extend it on correct side.
         const Path *p = filtered[max_path_key].first;
-        if (left) {
-            scaffold.nodes_.push_back(p->nodes_[0]);
+        if (!left) {
+//            scaffold.nodes_.push_back(p->nodes_[0]);
             for (long i = 0; i < p->edges_.size(); i++) {
                 scaffold.nodes_.push_back(p->nodes_[i + 1]);
                 scaffold.edges_.push_back(p->edges_[i]);
             }
         } else {
-            scaffold.nodes_.insert(scaffold.nodes_.begin(), p->nodes_[p->nodes_.size() - 1]);
-            for (long i = p->edges_.size() - 1; i >= 0; i--) {
+//            scaffold.nodes_.insert(scaffold.nodes_.begin(), p->nodes_[p->nodes_.size() - 1]);
+            for (long i = p->edges_.size() - 2; i >= 0; i--) {
                 scaffold.nodes_.insert(scaffold.nodes_.begin(), p->nodes_[i]);
                 scaffold.edges_.insert(scaffold.edges_.begin(), p->edges_[i]);
             }
