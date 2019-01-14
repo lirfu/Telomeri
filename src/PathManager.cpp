@@ -748,14 +748,12 @@ Path PathManager::constructConsensusPath(
         // Extend it on correct side.
         const Path *p = filtered[max_path_key].first;
         if (!left) {
-//            scaffold.nodes_.push_back(p->nodes_[0]);
             for (long i = 0; i < p->edges_.size(); i++) {
                 scaffold.nodes_.push_back(p->nodes_[i + 1]);
                 scaffold.edges_.push_back(p->edges_[i]);
             }
         } else {
-//            scaffold.nodes_.insert(scaffold.nodes_.begin(), p->nodes_[p->nodes_.size() - 1]);
-            for (long i = p->edges_.size() - 2; i >= 0; i--) {
+            for (long i = p->edges_.size() - 1; i >= 0; i--) {
                 scaffold.nodes_.insert(scaffold.nodes_.begin(), p->nodes_[i]);
                 scaffold.edges_.insert(scaffold.edges_.begin(), p->edges_[i]);
             }

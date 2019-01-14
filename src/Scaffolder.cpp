@@ -55,11 +55,13 @@ bool Scaffolder::write(const char *filename) {
         std::cerr << "Scaffold is empty!" << std::endl;
         return false;
     } else if (p_.nodes_.size() == 1) { // Single node path.
+        std::cout << p_.nodes_[0]->name << std::endl;
         filestream << reverse(std::move(getSequenceFrom(p_.nodes_[0]->name)));
         return true;
     }
 
     // First sequence.
+    std::cout << p_.nodes_[0]->name;
     tmp = getSequenceFrom(p_.nodes_[0]->name);
     sequence += reverse(substring(tmp, p_.edges_[0]->t_end + 1, tmp.size()));
 
@@ -76,6 +78,7 @@ bool Scaffolder::write(const char *filename) {
             if (e->relative_strand) {
                 swapBases(tmp);
             }
+            std::cout << '-' << p_.nodes_[i]->name;
             sequence += reverse(substring(tmp, start + 1, end));
             // The +1 is to not include the overlap area (next one will do that)
 
@@ -88,6 +91,7 @@ bool Scaffolder::write(const char *filename) {
     }
 
     // Last sequence.
+    std::cout << '-' << p_.nodes_[p_.nodes_.size() - 1]->name << std::endl;
     tmp = getSequenceFrom(p_.nodes_[p_.nodes_.size() - 1]->name);
     sequence += reverse(substring(tmp, 0, p_.edges_[p_.edges_.size() - 1]->q_end));
 
