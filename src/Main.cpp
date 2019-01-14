@@ -69,8 +69,7 @@ int main(int argc, char **argv) {
     PathManager::Parameters pm_params = {
             2000,
             60,
-            5000000ul,
-            5000,
+            4700000ul,
             1000ul,
             0.9f
     };
@@ -97,7 +96,6 @@ int main(int argc, char **argv) {
                   << "(default = 30).\n"
                   << "    --len-thr <value>    If difference between maximum and minimum path length is greater than "
                   << "this threshold, all paths go into same group (default = 10000).\n"
-                  << "    --nn-thr <value>     Faster and simpler metric for length (default = 50).\n"
                   << "    --w-size <value>     Window size in path length (default = 1000).\n"
                   << "    --r-thr              Valley and peak ratio needed for splitting the paths into groups "
                   << "according to lowest path length frequency in the valley window (default = 0.9).\n"
@@ -177,10 +175,6 @@ int main(int argc, char **argv) {
                     pm_params.len_threshold = (long) try_parse_pos_num(argv[i]);
                     parse_state = NONE;
                     break;
-                case NN_THR:
-                    pm_params.node_num_threshold = (long) try_parse_pos_num(argv[i]);
-                    parse_state = NONE;
-                    break;
                 case W_SIZE:
                     pm_params.window_size = try_parse_pos_num(argv[i]);
                     parse_state = NONE;
@@ -213,7 +207,6 @@ int main(int argc, char **argv) {
               << "    Rebuild attempts: " << pm_params.rebuild_attempts << "\n"
               << "    Backtrack attempts: " << pm_params.backtrack_attempts << "\n"
               << "    Length threshold: " << pm_params.len_threshold << "\n"
-              << "    Node number threshold: " << pm_params.node_num_threshold << "\n"
               << "    Window size: " << pm_params.window_size << "\n"
               << "    Ratio threshold: " << pm_params.ratio_threshold << "\n"
               << std::endl;
@@ -244,7 +237,6 @@ int main(int argc, char **argv) {
     pm.params_.rebuild_attempts = pm_params.rebuild_attempts;
     pm.params_.backtrack_attempts = pm_params.backtrack_attempts;
     pm.params_.len_threshold = pm_params.len_threshold;
-    pm.params_.node_num_threshold = pm_params.node_num_threshold;
     pm.params_.window_size = pm_params.window_size;
     pm.params_.ratio_threshold = pm_params.ratio_threshold;
 
@@ -252,9 +244,9 @@ int main(int argc, char **argv) {
 //    pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
     pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE);
 //    pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
-    pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE);
+//    pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE);
 //    pm.buildDeterministic(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
-    pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE);
+//    pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE);
 //    pm.buildDeterministic(graph, Utils::Metrics::OVERLAP_SCORE_SQRT);
 
     // Filter uniques.

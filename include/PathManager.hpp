@@ -32,8 +32,6 @@ public:
         /** If difference between maximum and minimum path length is greater than
          *  this threshold, all paths go into same group. */
         long len_threshold;
-        /** Faster and simpler metric for length. */
-        long node_num_threshold;
         /** Window size in path length. */
         ulong window_size;
         /** Valley and peak ratio needed for splitting the paths into groups
