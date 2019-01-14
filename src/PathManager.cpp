@@ -129,9 +129,10 @@ void PathManager::buildMonteCarlo(const OverlapGraph &g, const Utils::Metrics &m
                 }
 
                 // Abort if length is too large.
-                if (p.nodes_.size() >= params_.node_num_threshold) {
+                p.updateLength();
+                if (p.length() >= params_.len_threshold) {
 #ifdef DEBUG
-                    std::cout << "Length too large (" << p.nodes_.size() << "): " << p << '\n';
+                    std::cout << "Length too large (" << p.length << "): " << p << std::endl;
 #endif
                     break;
                 }
@@ -650,7 +651,8 @@ Path PathManager::constructConsensusPath(
     std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *> max_path_key;
 
     for (auto &pair:paths_between_contigs) {
-        if (!consensus_paths[pair.first]) continue;
+        if (!consensus_paths[pair.first]) continue; // Some bug?
+
         // Filter out small ones.
         ulong path_num = pair.second.size();
         if (path_num >= min_path_num) {
@@ -698,6 +700,7 @@ Path PathManager::constructConsensusPath(
                     max_path_key = pair;
                     left = true;
                     found = true;
+                    left_anchor = n;
                 }
 
                 // Check right.
@@ -707,6 +710,7 @@ Path PathManager::constructConsensusPath(
                     max_path_key = pair;
                     left = false;
                     found = true;
+                    right_anchor = n;
                 }
             }
         }

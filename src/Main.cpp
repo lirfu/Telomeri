@@ -67,10 +67,10 @@ int main(int argc, char **argv) {
             1.0f
     };
     PathManager::Parameters pm_params = {
+            2000,
+            60,
+            5000000ul,
             5000,
-            200,
-            10000ul,
-            1000,
             1000ul,
             0.9f
     };
@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
     graph.filter_params_.max_overhang_percentage = filter_params.max_overhang_percentage;
 
     // FIXME Just for testing.
-    graph.test_load_num_ = 100000;
+//    graph.test_load_num_ = 100000;
 
     std::cout << "\nLoading overlaps..." << std::endl;
     if (!graph.load(rr_file, false) || !graph.load(cr_file, true)) {
@@ -247,6 +247,7 @@ int main(int argc, char **argv) {
     pm.params_.node_num_threshold = pm_params.node_num_threshold;
     pm.params_.window_size = pm_params.window_size;
     pm.params_.ratio_threshold = pm_params.ratio_threshold;
+
     pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE);
     pm.buildMonteCarlo(graph, Utils::Metrics::EXTENSION_SCORE_SQRT);
     pm.buildMonteCarlo(graph, Utils::Metrics::OVERLAP_SCORE);
@@ -289,7 +290,7 @@ int main(int argc, char **argv) {
     std::map<std::pair<const OverlapGraph::Node *, const OverlapGraph::Node *>, const Path *>
             consensus_for_anchors;
 
-    long conssensus_num = 0;
+    long consensus_num = 0;
     for (auto &anchors_groups_pair : groups_for_anchors) { // Iterate over map, ([a1, a2], path_groups) pairs.
         const OverlapGraph::Node &anchor1 = *anchors_groups_pair.first.first;  // Begin anchor.
         const OverlapGraph::Node &anchor2 = *anchors_groups_pair.first.second; // End anchor.
@@ -344,7 +345,7 @@ int main(int argc, char **argv) {
 
         // Log the final consensus lenght to the standard output.
         const Path *consensus = consensus_for_anchors.at({&anchor1, &anchor2}); // Final consensus.
-        if (consensus && ++conssensus_num)
+        if (consensus && ++consensus_num)
             std::cout << "Final consensus (consensus among groups) length: " << consensus->length() << '\n';
         else
             std::cout << "Final consensus not found!\n";
@@ -352,7 +353,7 @@ int main(int argc, char **argv) {
                   << "' and anchor '" << anchor2.name << "'!" << std::endl;
     }
 
-    if (conssensus_num == 0) {
+    if (consensus_num == 0) {
         std::cerr << "No consensus found!" << std::endl;
         return 1;
     }
