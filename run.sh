@@ -38,7 +38,7 @@ then
     ./minimap2/minimap2 --dual=yes -x ava-pb $reads_file $reads_file  > $rr_file
     ./minimap2/minimap2 --dual=yes -x ava-pb $contigs_file $reads_file> $cr_file
 else
-    echo "Overlap files already exist!"
+    echo "Using existing overlap files!"
 fi
 
-# TODO Run HERA.
+./Telomeri $rr_file $cr_file $reads_file $contigs_file

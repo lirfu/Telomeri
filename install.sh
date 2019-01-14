@@ -8,5 +8,4 @@ cd ./minimap2
 make
 cd ..
 
-# TODO Compile HERA project.
-# ...
+make
