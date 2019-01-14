@@ -67,6 +67,9 @@ bool Scaffolder::write(const char *filename) {
 
         if (start < end) {
             tmp = getSequenceFrom(p_.nodes_[i]->name);
+            if (e->relative_strand) {
+                swapBases(tmp);
+            }
             sequence += reverse(substring(tmp, start + 1, end));
             // The +1 is to not include the overlap area (next one will do that)
 
