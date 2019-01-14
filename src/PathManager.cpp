@@ -678,8 +678,6 @@ Path PathManager::constructConsensusPath(
             continue;
         }
 
-        std::cout << pair.first.first->name << " " << pair.first.second->name << " " << pair.second.size() << std::endl;
-
         // Filter out small ones.
         ulong path_num = pair.second.size();
         if (path_num >= min_path_num) {
