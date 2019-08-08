@@ -5,7 +5,7 @@
 #include <Scaffolder.hpp>
 
 enum ParseState {
-    NONE, OLL, OLP, OHL, OHP, RB_ATT, BT_ATT, LEN_THR, NN_THR, W_SIZE, R_THR
+    NONE, OLL, OLP, OHL, OHP, RB_ATT, BT_ATT, LEN_THR, W_SIZE, R_THR
 };
 
 ulong try_parse_pos_num(const char *s) {
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
     } else if (argc > 6) {
         ParseState parse_state = NONE;
 
-        for (int i = 1; i < argc - 2; i++) {
+        for (int i = 1; i < argc - 5; i++) {
             std::string arg = argv[i];
             switch (parse_state) {
                 case NONE:
@@ -130,8 +130,6 @@ int main(int argc, char **argv) {
                         parse_state = BT_ATT;
                     } else if (arg == "--len-thr") {
                         parse_state = LEN_THR;
-                    } else if (arg == "--nn-thr") {
-                        parse_state = NN_THR;
                     } else if (arg == "--w-size") {
                         parse_state = W_SIZE;
                     } else if (arg == "--r-thr") {
